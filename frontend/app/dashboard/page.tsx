@@ -3,441 +3,346 @@
 import { useState } from 'react';
 
 export default function DashboardPage() {
-  const [tasks, setTasks] = useState([
-    { id: 1, title: 'Complete project documentation', status: 'TODO' },
-    { id: 2, title: 'Test API endpoints', status: 'IN_PROGRESS' },
-    { id: 3, title: 'Deploy to production', status: 'DONE' },
-  ]);
-  
-  const [newTask, setNewTask] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState('Management');
 
-  const addTask = () => {
-    if (newTask.trim()) {
-      setTasks([...tasks, {
-        id: tasks.length + 1,
-        title: newTask,
-        status: 'TODO'
-      }]);
-      setNewTask('');
-      alert('Task added successfully!');
-    }
-  };
+  const tasksByPriority = [
+    { category: 'High', tasks: 12, completed: 8, inProgress: 11, overdue: 32, color: '#EF4444' },
+    { category: 'Middle', tasks: 12, completed: 8, inProgress: 11, overdue: 31, color: '#F59E0B' },
+    { category: 'Low', tasks: 12, completed: 8, inProgress: 11, overdue: 30, color: '#10B981' },
+    { category: 'Total', tasks: 12, completed: 8, inProgress: 11, overdue: 32, color: '#3B82F6' },
+  ];
 
-  const toggleStatus = (id: number) => {
-    setTasks(tasks.map(task => {
-      if (task.id === id) {
-        const nextStatus = 
-          task.status === 'TODO' ? 'IN_PROGRESS' :
-          task.status === 'IN_PROGRESS' ? 'DONE' : 'TODO';
-        return { ...task, status: nextStatus };
-      }
-      return task;
-    }));
-    alert('Task status updated!');
-  };
+  const teamMembers = [
+    { initials: 'FM', name: 'Floyd Miles', role: 'Content manager' },
+    { initials: 'LA', name: 'Leslie Alexander', role: 'Programmer' },
+    { initials: 'KW', name: 'Kristin Watson', role: 'Content manager' },
+    { initials: 'JD', name: 'Jacob Doe', role: 'Admin' },
+  ];
 
-  const deleteTask = (id: number) => {
-    if (confirm('Are you sure you want to delete this task?')) {
-      setTasks(tasks.filter(task => task.id !== id));
-      alert('Task deleted!');
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'TODO': return '#f59e0b';
-      case 'IN_PROGRESS': return '#3b82f6';
-      case 'DONE': return '#10b981';
-      default: return '#6b7280';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch(status) {
-      case 'TODO': return 'To Do';
-      case 'IN_PROGRESS': return 'In Progress';
-      case 'DONE': return 'Done';
-      default: return status;
-    }
-  };
+  const upcomingMeetings = [
+    { title: 'Technical interview with Carl ...', time: '10:00 AM' },
+    { title: 'Meeting with customer', time: '2:30 PM' },
+  ];
 
   return (
-    <div style={{ 
-      fontFamily: 'Arial, sans-serif',
-      minHeight: '100vh',
-      backgroundColor: '#f3f4f6'
-    }}>
-      {/* Navigation */}
-      <div style={{
-        backgroundColor: 'white',
-        padding: '16px 0',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        marginBottom: '40px'
+    <>
+      {/* Header */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '32px'
       }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <h1 style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#1e40af'
+        <div>
+          <h1 style={{ 
+            fontSize: '30px', 
+            fontWeight: '700',
+            color: '#111827',
+            marginBottom: '4px'
           }}>
-            TaskFlow Dashboard
+            Dashboard
           </h1>
-          <button
-            onClick={() => {
-              if (confirm('Are you sure you want to logout?')) {
-                window.location.href = '/';
-              }
-            }}
-            style={{
-              backgroundColor: '#ef4444',
-              color: 'white',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            Logout
+          <p style={{ 
+            fontSize: '14px', 
+            color: '#6B7280'
+          }}>
+            Monday, 21 September 2020
+          </p>
+        </div>
+        
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '12px'
+        }}>
+          <button style={{
+            padding: '8px 16px',
+            backgroundColor: 'white',
+            border: '1px solid #E5E7EB',
+            borderRadius: '8px',
+            fontSize: '14px',
+            color: '#374151',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 8V16M8 12H16M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+                stroke="#4B5563" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
+            Add Task
           </button>
+          
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            backgroundColor: '#3B82F6',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: '600',
+            fontSize: '16px'
+          }}>
+            JD
+          </div>
         </div>
       </div>
 
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '0 20px'
+      {/* Welcome Card */}
+      <div style={{ 
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '24px',
+        marginBottom: '24px',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+        border: '1px solid #E5E7EB'
       }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr 1fr',
-          gap: '20px',
-          marginBottom: '40px'
+        <h2 style={{ 
+          fontSize: '20px', 
+          fontWeight: '600',
+          color: '#111827',
+          marginBottom: '12px'
         }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '12px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              fontSize: '36px',
-              fontWeight: 'bold',
-              color: '#3b82f6',
-              marginBottom: '8px'
-            }}>
-              {tasks.length}
-            </div>
-            <div style={{ color: '#6b7280' }}>
-              Total Tasks
-            </div>
-          </div>
-          
-          <div style={{
-            backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '12px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              fontSize: '36px',
-              fontWeight: 'bold',
-              color: '#f59e0b',
-              marginBottom: '8px'
-            }}>
-              {tasks.filter(t => t.status === 'TODO').length}
-            </div>
-            <div style={{ color: '#6b7280' }}>
-              To Do
-            </div>
-          </div>
-          
-          <div style={{
-            backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '12px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              fontSize: '36px',
-              fontWeight: 'bold',
-              color: '#8b5cf6',
-              marginBottom: '8px'
-            }}>
-              {tasks.filter(t => t.status === 'IN_PROGRESS').length}
-            </div>
-            <div style={{ color: '#6b7280' }}>
-              In Progress
-            </div>
-          </div>
-          
-          <div style={{
-            backgroundColor: 'white',
-            padding: '24px',
-            borderRadius: '12px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              fontSize: '36px',
-              fontWeight: 'bold',
-              color: '#10b981',
-              marginBottom: '8px'
-            }}>
-              {tasks.filter(t => t.status === 'DONE').length}
-            </div>
-            <div style={{ color: '#6b7280' }}>
-              Completed
-            </div>
-          </div>
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 2fr',
-          gap: '40px'
+          Welcome Back, Jacob!
+        </h2>
+        <p style={{ 
+          fontSize: '16px', 
+          color: '#6B7280',
+          lineHeight: '1.5'
         }}>
-          {/* Left Column */}
-          <div>
-            {/* Add Task Form */}
-            <div style={{
-              backgroundColor: 'white',
-              padding: '24px',
-              borderRadius: '12px',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-              marginBottom: '24px'
-            }}>
-              <h2 style={{
-                fontSize: '20px',
-                fontWeight: 'bold',
-                marginBottom: '20px',
-                color: '#1e40af'
-              }}>
-                ➕ Add New Task
-              </h2>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                <input
-                  type="text"
-                  value={newTask}
-                  onChange={(e) => setNewTask(e.target.value)}
-                  placeholder="Enter task title..."
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '16px'
-                  }}
-                  onKeyPress={(e) => e.key === 'Enter' && addTask()}
-                />
-                <button
-                  onClick={addTask}
-                  style={{
-                    backgroundColor: '#3b82f6',
-                    color: 'white',
-                    padding: '12px 24px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Add
-                </button>
-              </div>
-            </div>
+          You have <strong>6 tasks</strong> for today. You have already completed <strong>50%</strong> of tasks.
+          Your progress is <strong style={{ color: '#10B981' }}>very good</strong>.
+        </p>
+      </div>
 
-            {/* Backend Status */}
-            <div style={{
-              backgroundColor: '#f0f9ff',
-              padding: '24px',
-              borderRadius: '12px',
-              border: '1px solid #bae6fd'
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '1fr 1fr',
+        gap: '24px'
+      }}>
+        {/* Left Column */}
+        <div>
+          {/* Upcoming Meetings */}
+          <div style={{ 
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '24px',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #E5E7EB'
+          }}>
+            <h3 style={{ 
+              fontSize: '18px', 
+              fontWeight: '600',
+              color: '#111827',
+              marginBottom: '20px'
             }}>
-              <h3 style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                marginBottom: '16px',
-                color: '#0369a1'
+              Upcoming meetings
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {upcomingMeetings.map((meeting, index) => (
+                <div key={index} style={{ 
+                  display: 'flex', 
+                  alignItems: 'flex-start',
+                  gap: '12px'
+                }}>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: '#3B82F6',
+                    marginTop: '6px',
+                    flexShrink: 0
+                  }}></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ 
+                      fontSize: '15px', 
+                      color: '#111827',
+                      marginBottom: '2px'
+                    }}>
+                      {meeting.title}
+                    </p>
+                    <p style={{ 
+                      fontSize: '13px', 
+                      color: '#6B7280'
+                    }}>
+                      {meeting.time}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* My Team */}
+          <div style={{ 
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '20px',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #E5E7EB'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{ 
+                fontSize: '18px', 
+                fontWeight: '600',
+                color: '#111827'
               }}>
-                🔗 Backend API Status
+                My Team
               </h3>
-              <p style={{ marginBottom: '12px', color: '#1e40af' }}>
-                ✅ Running at: http://localhost:5000
-              </p>
-              <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                <p>• POST /api/auth/register</p>
-                <p>• POST /api/auth/login</p>
-                <p>• GET /api/tasks</p>
-                <p>• POST /api/tasks</p>
-                <p>• PATCH /api/tasks/:id</p>
-                <p>• DELETE /api/tasks/:id</p>
+              
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 12px',
+                backgroundColor: '#F3F4F6',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}>
+                <span style={{ fontSize: '14px', color: '#374151' }}>
+                  Team: {selectedTeam}
+                </span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 9L12 16L5 9" 
+                    stroke="#4B5563" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
             </div>
-          </div>
 
-          {/* Right Column - Task List */}
-          <div>
-            <div style={{
-              backgroundColor: 'white',
-              padding: '24px',
-              borderRadius: '12px',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '24px'
-              }}>
-                <h2 style={{
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  color: '#1e40af'
+            {/* Team Members List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {teamMembers.map((member, index) => (
+                <div key={index} style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: '16px'
                 }}>
-                  📋 Your Tasks
-                </h2>
-                <div style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#f3f4f6',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  color: '#6b7280'
-                }}>
-                  {tasks.length} tasks
+                  <div style={{
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '50%',
+                    backgroundColor: index === 0 ? '#3B82F6' : 
+                                    index === 1 ? '#10B981' : 
+                                    index === 2 ? '#8B5CF6' : '#F59E0B',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: '600',
+                    fontSize: '18px',
+                    flexShrink: 0
+                  }}>
+                    {member.initials}
+                  </div>
+                  
+                  <div style={{ flex: 1 }}>
+                    <p style={{ 
+                      fontSize: '16px', 
+                      color: '#111827',
+                      fontWeight: '500',
+                      marginBottom: '4px'
+                    }}>
+                      {member.name}
+                    </p>
+                    <p style={{ 
+                      fontSize: '14px', 
+                      color: '#6B7280'
+                    }}>
+                      {member.role}
+                    </p>
+                  </div>
                 </div>
-              </div>
-
-              {tasks.length === 0 ? (
-                <div style={{ 
-                  textAlign: 'center', 
-                  padding: '60px 20px',
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '8px'
-                }}>
-                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>📭</div>
-                  <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>
-                    No tasks yet
-                  </h3>
-                  <p style={{ color: '#6b7280', marginBottom: '24px' }}>
-                    Create your first task using the form
-                  </p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {tasks.map((task) => (
-                    <div
-                      key={task.id}
-                      style={{
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        padding: '20px',
-                        backgroundColor: '#f9fafb'
-                      }}
-                    >
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '12px'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <div style={{
-                            width: '12px',
-                            height: '12px',
-                            backgroundColor: getStatusColor(task.status),
-                            borderRadius: '50%',
-                            marginRight: '12px'
-                          }}></div>
-                          <h3 style={{ 
-                            fontSize: '18px', 
-                            fontWeight: 'bold',
-                            color: '#1f2937'
-                          }}>
-                            {task.title}
-                          </h3>
-                        </div>
-                        
-                        <div style={{
-                          padding: '6px 12px',
-                          backgroundColor: getStatusColor(task.status) + '20',
-                          color: getStatusColor(task.status),
-                          borderRadius: '20px',
-                          fontSize: '14px',
-                          fontWeight: 'bold'
-                        }}>
-                          {getStatusText(task.status)}
-                        </div>
-                      </div>
-                      
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'flex-end',
-                        gap: '8px'
-                      }}>
-                        <button
-                          onClick={() => toggleStatus(task.id)}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: '#3b82f6',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '14px'
-                          }}
-                        >
-                          Toggle Status
-                        </button>
-                        
-                        <button
-                          onClick={() => deleteTask(task.id)}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '14px'
-                          }}
-                        >
-                          Delete Task
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div style={{
-          marginTop: '60px',
+        {/* Right Column - Tasks by Priority */}
+        <div style={{ 
+          backgroundColor: 'white',
+          borderRadius: '12px',
           padding: '20px',
-          textAlign: 'center',
-          color: '#6b7280',
-          fontSize: '14px',
-          borderTop: '1px solid #e5e7eb'
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #E5E7EB'
         }}>
-          <p>TaskFlow Pro - Complete Task Management System</p>
-          <p>Software Engineering Assessment | All Requirements Implemented ✅</p>
+          <h3 style={{ 
+            fontSize: '18px', 
+            fontWeight: '600',
+            color: '#111827',
+            marginBottom: '20px'
+          }}>
+            Tasks
+          </h3>
+          
+          <div style={{ marginBottom: '24px' }}>
+            <h4 style={{ 
+              fontSize: '15px', 
+              fontWeight: '500',
+              color: '#6B7280',
+              marginBottom: '16px'
+            }}>
+              Tasks by: priority
+            </h4>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '16px',
+              marginBottom: '20px'
+            }}>
+              {tasksByPriority.map((item, index) => (
+                <div key={index} style={{ textAlign: 'center' }}>
+                  <p style={{ 
+                    fontSize: '12px', 
+                    color: '#6B7280',
+                    marginBottom: '8px'
+                  }}>
+                    {item.category}
+                  </p>
+                  <div style={{ 
+                    width: '40px', 
+                    height: '40px',
+                    borderRadius: '50%',
+                    backgroundColor: item.color,
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: '600',
+                    fontSize: '14px',
+                    margin: '0 auto 8px'
+                  }}>
+                    {item.tasks}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#6B7280' }}>
+                    <div>{item.completed}</div>
+                    <div>{item.inProgress}</div>
+                    <div>{item.overdue}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  )
+    </>
+  );
 }

@@ -121,45 +121,6 @@ export default function Sidebar() {
         borderTop: '1px solid #E5E7EB', 
         paddingTop: '20px'
       }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center',
-          gap: '12px',
-          marginBottom: '20px',
-          padding: '12px'
-        }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            backgroundColor: '#3B82F6',
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: '600',
-            fontSize: '16px'
-          }}>
-            JD
-          </div>
-          <div>
-            <p style={{ 
-              fontSize: '15px', 
-              color: '#111827',
-              fontWeight: '500',
-              marginBottom: '2px'
-            }}>
-              Jacob Doe
-            </p>
-            <p style={{ 
-              fontSize: '13px', 
-              color: '#6B7280'
-            }}>
-              Admin
-            </p>
-          </div>
-        </div>
-
         <button
           onClick={handleLogout}
           style={{

@@ -9,7 +9,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const [activeItem, setActiveItem] = useState(() => {
     if (pathname.includes('/boards')) return 'boards';
     if (pathname.includes('/tasks')) return 'tasks';
-    if (pathname.includes('/meetings')) return 'meetings';
     if (pathname.includes('/timesheets')) return 'timesheets';
     return 'dashboard';
   });
@@ -18,7 +17,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
     { id: 'boards', label: 'Boards', path: '/boards' },
     { id: 'tasks', label: 'Tasks', path: '/tasks' },
-    { id: 'meetings', label: 'Meetings', path: '/meetings' },
     { id: 'timesheets', label: 'Timesheets', path: '/timesheets' },
   ];
 

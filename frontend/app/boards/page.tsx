@@ -1,89 +1,107 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getAllTasks, type Task } from '../../lib/tasks';
 
 export default function BoardsPage() {
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
   const [selectedBoard, setSelectedBoard] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  // Load tasks from shared storage
+  useEffect(() => {
+    setTasks(getAllTasks());
+  }, []);
 
   const boards = [
     {
       id: 1,
-      title: 'Content strategy development',
-      categories: ['Marketing'],
-      totalTasks: 125,
-      teamName: 'Explore Team',
-      teamMembers: '+8',
-      color: '#3B82F6'
+      title: 'Management Board',
+      categories: ['Management'],
+      color: '#3B82F6',
+      description: 'All management related tasks'
     },
     {
       id: 2,
-      title: 'Social media strategy development',
-      categories: ['Marketing'],
-      totalTasks: 68,
-      teamName: 'Explore Team',
-      teamMembers: '+5',
-      color: '#10B981'
+      title: 'Sales Board',
+      categories: ['Sales'],
+      color: '#10B981',
+      description: 'Sales team tasks and targets'
     },
     {
       id: 3,
-      title: 'Email marketing campaign',
-      categories: ['Management', 'Marketing', 'Human Resources'],
-      totalTasks: 125,
-      teamName: 'Explore Team',
-      teamMembers: '+4',
-      color: '#8B5CF6'
+      title: 'Operations Board',
+      categories: ['Operations'],
+      color: '#8B5CF6',
+      description: 'Operations and logistics tasks'
     },
     {
       id: 4,
-      title: 'Old content updates',
+      title: 'Marketing Board',
       categories: ['Marketing'],
-      totalTasks: 20,
-      teamName: 'Explore Team',
-      teamMembers: '+2',
-      color: '#F59E0B'
+      color: '#F59E0B',
+      description: 'Marketing campaigns and strategies'
     },
     {
       id: 5,
-      title: 'Conducting customer and market research',
-      categories: ['Marketing'],
-      totalTasks: 41,
-      teamName: 'Explore Team',
-      teamMembers: '+2',
-      color: '#EF4444'
+      title: 'HR Board',
+      categories: ['Human Resources'],
+      color: '#EF4444',
+      description: 'Human resources and recruitment'
     },
     {
       id: 6,
-      title: 'Overseeing outside vendors and agencies',
-      categories: ['Marketing'],
-      totalTasks: 28,
-      teamName: 'Explore Team',
-      teamMembers: '+20',
-      color: '#06B6D4'
+      title: 'Finance Board',
+      categories: ['Finance'],
+      color: '#06B6D4',
+      description: 'Financial planning and analysis'
     },
     {
       id: 7,
-      title: 'Exhibitions, seminars and events',
-      categories: ['Marketing'],
-      totalTasks: 17,
-      teamName: 'Explore Team',
-      teamMembers: '+9',
-      color: '#EC4899'
+      title: 'Customer Service Board',
+      categories: ['Customer Service'],
+      color: '#EC4899',
+      description: 'Customer support and service'
     },
   ];
+
+  // Add tasks to each board based on department
+  const boardsWithTasks = boards.map(board => {
+    const boardTasks = tasks.filter(task => 
+      board.categories.some(category => 
+        task.department.toLowerCase().includes(category.toLowerCase())
+      )
+    );
+    
+    return {
+      ...board,
+      tasks: boardTasks,
+      totalTasks: boardTasks.length,
+      completedTasks: boardTasks.filter(t => t.status === 'completed').length,
+      pendingTasks: boardTasks.filter(t => t.status === 'pending').length,
+      inProgressTasks: boardTasks.filter(t => t.status === 'in-progress').length,
+    };
+  });
 
   const handleBoardClick = (boardId: number) => {
     setSelectedBoard(boardId);
   };
 
-  const filteredBoards = boards.filter(board => 
+  const filteredBoards = boardsWithTasks.filter(board => 
     board.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     board.categories.some(cat => cat.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const getPriorityColor = (priority: string) => {
+    const num = parseInt(priority.split(' ')[0]);
+    if (num <= 2) return '#10B981';
+    if (num <= 4) return '#F59E0B';
+    return '#EF4444';
+  };
+
   return (
-    <>
+    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header with Search and View Toggle */}
       <div style={{ 
         display: 'flex', 
@@ -100,6 +118,9 @@ export default function BoardsPage() {
           }}>
             Boards
           </h1>
+          <p style={{ fontSize: '16px', color: '#6B7280' }}>
+            {tasks.length} tasks across {boardsWithTasks.length} boards
+          </p>
         </div>
 
         <div style={{ 
@@ -117,22 +138,13 @@ export default function BoardsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                width: '100%',
+                width: '82%',
                 padding: '12px 20px 12px 48px',
                 border: '1px solid #E5E7EB',
                 borderRadius: '10px',
                 fontSize: '16px',
                 backgroundColor: 'white',
-                outline: 'none',
-                transition: 'all 0.2s'
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3B82F6';
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#E5E7EB';
-                e.target.style.boxShadow = 'none';
+                outline: 'none'
               }}
             />
             <svg style={{
@@ -147,82 +159,6 @@ export default function BoardsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
           </div>
-
-          {/* View Mode Toggle */}
-          <div style={{
-            display: 'flex',
-            backgroundColor: '#F3F4F6',
-            borderRadius: '8px',
-            padding: '4px',
-            marginRight: '12px'
-          }}>
-            <button
-              onClick={() => setViewMode('list')}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: viewMode === 'list' ? 'white' : 'transparent',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                color: viewMode === 'list' ? '#111827' : '#6B7280',
-                fontWeight: '500',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none'
-              }}
-            >
-              List
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: viewMode === 'grid' ? 'white' : 'transparent',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                color: viewMode === 'grid' ? '#111827' : '#6B7280',
-                fontWeight: '500',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none'
-              }}
-            >
-              Grid
-            </button>
-          </div>
-          
-          <button style={{
-            padding: '12px 24px',
-            backgroundColor: '#3B82F6',
-            border: 'none',
-            borderRadius: '10px',
-            fontSize: '16px',
-            color: 'white',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'background-color 0.2s'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563EB'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3B82F6'}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 4V20M20 12H4" 
-                stroke="white" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              />
-            </svg>
-            New Board
-          </button>
         </div>
       </div>
 
@@ -247,7 +183,7 @@ export default function BoardsPage() {
           onMouseEnter={(e) => {
             e.currentTarget.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.08)';
             e.currentTarget.style.transform = 'translateY(-4px)';
-            e.currentTarget.style.borderColor = '#3B82F6';
+            e.currentTarget.style.borderColor = board.color;
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.boxShadow = 'none';
@@ -271,7 +207,7 @@ export default function BoardsPage() {
               fontSize: '20px',
               fontWeight: '700',
               color: '#111827',
-              marginBottom: '20px',
+              marginBottom: '16px',
               lineHeight: '1.4',
               paddingRight: '30px'
             }}>
@@ -281,94 +217,119 @@ export default function BoardsPage() {
             {/* Categories */}
             <div style={{
               display: 'flex',
-              flexDirection: 'column',
+              flexWrap: 'wrap',
               gap: '8px',
-              marginBottom: '24px'
+              marginBottom: '20px'
             }}>
               {board.categories.map((category, index) => (
-                <div key={index} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
+                <span key={index} style={{
+                  padding: '4px 12px',
+                  backgroundColor: '#F3F4F6',
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  color: '#374151',
+                  fontWeight: '500'
                 }}>
-                  <div style={{
-                    width: '4px',
-                    height: '4px',
-                    backgroundColor: '#6B7280',
-                    borderRadius: '50%'
-                  }}></div>
-                  <span style={{
-                    fontSize: '15px',
-                    color: '#6B7280'
-                  }}>
-                    {category}
-                  </span>
-                </div>
+                  {category}
+                </span>
               ))}
             </div>
 
-            {/* Separator */}
-            <div style={{
-              height: '1px',
-              backgroundColor: '#E5E7EB',
-              margin: '24px 0'
-            }}></div>
-
-            {/* Stats and Team Info */}
+            {/* Task Stats */}
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: '#F9FAFB',
+              borderRadius: '8px'
             }}>
-              <div>
-                <p style={{
-                  fontSize: '14px',
-                  color: '#6B7280',
-                  marginBottom: '4px'
-                }}>
-                  <strong>Total tasks</strong> {board.totalTasks}
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: '20px', fontWeight: '700', color: '#111827', marginBottom: '4px' }}>
+                  {board.totalTasks}
                 </p>
+                <p style={{ fontSize: '12px', color: '#6B7280' }}>Total Tasks</p>
               </div>
-              
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <span style={{
-                  fontSize: '14px',
-                  color: '#6B7280'
-                }}>
-                  {board.teamMembers}
-                </span>
-                <div style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#F3F4F6',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  color: '#374151',
-                  fontWeight: '500',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  {board.teamName}
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 5L16 12L9 19" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: '20px', fontWeight: '700', color: '#10B981', marginBottom: '4px' }}>
+                  {board.completedTasks}
+                </p>
+                <p style={{ fontSize: '12px', color: '#6B7280' }}>Done</p>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: '20px', fontWeight: '700', color: '#F59E0B', marginBottom: '4px' }}>
+                  {board.inProgressTasks}
+                </p>
+                <p style={{ fontSize: '12px', color: '#6B7280' }}>In Progress</p>
+              </div>
+            </div>
+
+            {/* Recent Tasks Preview */}
+            <div style={{
+              marginTop: '16px',
+              paddingTop: '16px',
+              borderTop: '1px solid #E5E7EB'
+            }}>
+              <p style={{ fontSize: '14px', fontWeight: '600', color: '#6B7280', marginBottom: '12px' }}>
+                Recent Tasks
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {board.tasks.slice(0, 3).map((task, index) => (
+                  <div key={task.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px',
+                    backgroundColor: '#F9FAFB',
+                    borderRadius: '6px'
+                  }}>
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: task.status === 'completed' ? '#10B981' : 
+                                      task.status === 'in-progress' ? '#F59E0B' : '#EF4444'
+                    }}></div>
+                    <span style={{
+                      fontSize: '12px',
+                      color: '#374151',
+                      flex: 1,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      {task.task}
+                    </span>
+                    <span style={{
+                      fontSize: '10px',
+                      padding: '2px 6px',
+                      backgroundColor: getPriorityColor(task.priority) + '20',
+                      color: getPriorityColor(task.priority),
+                      borderRadius: '4px',
+                      fontWeight: '600'
+                    }}>
+                      {task.priority}
+                    </span>
+                  </div>
+                ))}
+                {board.tasks.length === 0 && (
+                  <p style={{ fontSize: '12px', color: '#9CA3AF', textAlign: 'center', padding: '8px' }}>
+                    No tasks yet
+                  </p>
+                )}
+                {board.tasks.length > 3 && (
+                  <p style={{ fontSize: '12px', color: '#6B7280', textAlign: 'center', padding: '8px' }}>
+                    +{board.tasks.length - 3} more tasks
+                  </p>
+                )}
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Modal for Board Details */}
+      {/* Board Details Modal */}
       {selectedBoard !== null && (
         <div style={{
           position: 'fixed',
@@ -381,7 +342,7 @@ export default function BoardsPage() {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
-          backdropFilter: 'blur(4px)'
+          padding: '20px'
         }}
         onClick={() => setSelectedBoard(null)}
         >
@@ -390,7 +351,7 @@ export default function BoardsPage() {
             borderRadius: '16px',
             padding: '32px',
             width: '90%',
-            maxWidth: '500px',
+            maxWidth: '800px',
             maxHeight: '80vh',
             overflowY: 'auto',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
@@ -399,50 +360,218 @@ export default function BoardsPage() {
           onClick={(e) => e.stopPropagation()}
           >
             {(() => {
-              const board = boards.find(b => b.id === selectedBoard);
+              const board = boardsWithTasks.find(b => b.id === selectedBoard);
               if (!board) return null;
               
               return (
                 <>
+                  <button
+                    onClick={() => setSelectedBoard(null)}
+                    style={{
+                      position: 'absolute',
+                      top: '20px',
+                      right: '20px',
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '24px',
+                      color: '#6B7280',
+                      cursor: 'pointer',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '50%',
+                      backgroundColor: '#F3F4F6'
+                    }}
+                  >
+                    ×
+                  </button>
+
                   <h2 style={{
                     fontSize: '24px',
                     fontWeight: '700',
                     color: '#111827',
-                    marginBottom: '24px'
+                    marginBottom: '8px'
                   }}>
                     {board.title}
                   </h2>
                   
-                  <p style={{
-                    fontSize: '16px',
-                    color: '#6B7280',
-                    marginBottom: '24px'
-                  }}>
-                    Click the button below to explore this board in detail.
+                  <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>
+                    {board.description}
                   </p>
                   
-                  <button style={{
-                    width: '100%',
-                    padding: '14px',
-                    backgroundColor: '#3B82F6',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontSize: '16px',
-                    color: 'white',
+                  <div style={{
+                    display: 'flex',
+                    gap: '12px',
+                    marginBottom: '24px'
+                  }}>
+                    {board.categories.map((category, index) => (
+                      <span key={index} style={{
+                        padding: '4px 12px',
+                        backgroundColor: '#F3F4F6',
+                        borderRadius: '16px',
+                        fontSize: '12px',
+                        color: '#374151',
+                        fontWeight: '500'
+                      }}>
+                        {category}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Task Statistics */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: '16px',
+                    marginBottom: '24px',
+                    padding: '20px',
+                    backgroundColor: '#F9FAFB',
+                    borderRadius: '12px'
+                  }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '4px' }}>
+                        {board.totalTasks}
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#6B7280' }}>Total Tasks</p>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ fontSize: '24px', fontWeight: '700', color: '#10B981', marginBottom: '4px' }}>
+                        {board.completedTasks}
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#6B7280' }}>Completed</p>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ fontSize: '24px', fontWeight: '700', color: '#F59E0B', marginBottom: '4px' }}>
+                        {board.inProgressTasks}
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#6B7280' }}>In Progress</p>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ fontSize: '24px', fontWeight: '700', color: '#EF4444', marginBottom: '4px' }}>
+                        {board.pendingTasks}
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#6B7280' }}>Pending</p>
+                    </div>
+                  </div>
+
+                  {/* Tasks List */}
+                  <h3 style={{
+                    fontSize: '18px',
                     fontWeight: '600',
-                    cursor: 'pointer',
-                    marginTop: '20px'
-                  }}
-                  onClick={() => setSelectedBoard(null)}
-                  >
-                    Open Board Details
-                  </button>
+                    color: '#111827',
+                    marginBottom: '16px'
+                  }}>
+                    All Tasks ({board.tasks.length})
+                  </h3>
+
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {board.tasks.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '40px', color: '#6B7280' }}>
+                        No tasks in this board. Add tasks from the Tasks page!
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {board.tasks.map((task) => (
+                          <div key={task.id} style={{
+                            padding: '16px',
+                            backgroundColor: 'white',
+                            border: '1px solid #E5E7EB',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                          }}>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ 
+                                fontSize: '14px', 
+                                color: '#111827',
+                                marginBottom: '4px',
+                                textDecoration: task.status === 'completed' ? 'line-through' : 'none'
+                              }}>
+                                {task.task}
+                              </p>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span style={{ 
+                                  fontSize: '12px', 
+                                  color: '#6B7280',
+                                  backgroundColor: '#F3F4F6',
+                                  padding: '2px 8px',
+                                  borderRadius: '12px'
+                                }}>
+                                  {task.department}
+                                </span>
+                                <span style={{ 
+                                  fontSize: '12px', 
+                                  color: task.status === 'completed' ? '#10B981' : 
+                                         task.status === 'in-progress' ? '#F59E0B' : '#EF4444',
+                                  fontWeight: '500'
+                                }}>
+                                  {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                                </span>
+                              </div>
+                            </div>
+                            <span style={{ 
+                              fontSize: '14px', 
+                              fontWeight: '600',
+                              color: getPriorityColor(task.priority)
+                            }}>
+                              {task.priority}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </>
               );
             })()}
           </div>
         </div>
       )}
-    </>
+
+      {/* Empty State */}
+      {filteredBoards.length === 0 && (
+        <div style={{
+          textAlign: 'center',
+          padding: '60px 20px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          border: '1px solid #E5E7EB',
+          marginTop: '20px'
+        }}>
+          <div style={{
+            width: '80px',
+            height: '80px',
+            backgroundColor: '#F3F4F6',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 24px',
+            fontSize: '32px'
+          }}>
+            📋
+          </div>
+          <h3 style={{
+            fontSize: '20px',
+            fontWeight: '600',
+            color: '#111827',
+            marginBottom: '12px'
+          }}>
+            No boards found
+          </h3>
+          <p style={{
+            fontSize: '16px',
+            color: '#6B7280',
+            maxWidth: '400px',
+            margin: '0 auto 24px'
+          }}>
+            Try adjusting your search or add some tasks to see them appear here.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

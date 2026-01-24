@@ -98,19 +98,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 </span>
               </div>
 
-              {/* Navigation Heading */}
               <nav>
-                <h2 style={{ 
-                  fontSize: '14px', 
-                  color: '#6B7280',
-                  fontWeight: '500',
-                  marginBottom: '16px',
-                  paddingLeft: '8px',
-                  letterSpacing: '0.5px'
-                }}>
-                  Navigation
-                </h2>
-                
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {menuItems.map((item) => (
                     <li key={item.id} style={{ marginBottom: '4px' }}>

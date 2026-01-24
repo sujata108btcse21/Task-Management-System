@@ -1,114 +1,51 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { logout } from '../../lib/user';
+import './styles.css';
 
 export default function Sidebar() {
   const router = useRouter();
-  const pathname = usePathname();
   const [activeItem, setActiveItem] = useState('dashboard');
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'board', label: 'Board', icon: '📊' },
-    { id: 'tasks', label: 'Tasks', icon: '✅' },
-    { id: 'calendar', label: 'Calendar', icon: '📅' },
-    { id: 'projects', label: 'Projects', icon: '📁' },
-    { id: 'team', label: 'Team', icon: '👥' },
-    { id: 'reports', label: 'Reports', icon: '📈' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
+    { id: 'dashboard', label: 'Dashboard', icon: '📊', path: '/dashboard' },
+    { id: 'boards', label: 'Boards', icon: '📋', path: '/boards' },
+    { id: 'tasks', label: 'Tasks', icon: '✅', path: '/tasks' },
+    { id: 'timesheet', label: 'Meetings', icon: '📅', path: '/timesheet' },
   ];
 
   const handleLogout = () => {
-    // Clear any authentication tokens
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+    logout();
     router.push('/');
   };
 
+  const handleNavigation = (item: typeof menuItems[0]) => {
+    setActiveItem(item.id);
+    router.push(item.path);
+  };
+
   return (
-    <aside style={{
-      width: '250px',
-      backgroundColor: 'white',
-      borderRight: '1px solid #E5E7EB',
-      padding: '24px 16px',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      position: 'sticky',
-      top: 0
-    }}>
-      {/* Logo */}
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '12px',
-        marginBottom: '40px',
-        paddingLeft: '12px'
-      }}>
-        <div style={{
-          width: '36px',
-          height: '36px',
-          backgroundColor: '#3B82F6',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          fontWeight: 'bold',
-          fontSize: '18px'
-        }}>
+    <aside className="sidebar">
+      <div className="logo-container">
+        <div className="logo-icon">
           T
         </div>
-        <span style={{ 
-          fontSize: '20px', 
-          fontWeight: '700',
-          color: '#111827'
-        }}>
+        <span className="logo-text">
           TaskFlow
         </span>
       </div>
 
-      {/* Menu Items */}
-      <nav style={{ flex: 1 }}>
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+      <nav className="sidebar-nav">
+        <ul className="menu-list">
           {menuItems.map((item) => (
-            <li key={item.id} style={{ marginBottom: '8px' }}>
+            <li key={item.id} className="menu-item">
               <button
-                onClick={() => {
-                  setActiveItem(item.id);
-                  router.push(`/${item.id === 'dashboard' ? 'dashboard' : item.id}`);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  backgroundColor: activeItem === item.id ? '#F3F4F6' : 'transparent',
-                  border: 'none',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  cursor: 'pointer',
-                  fontSize: '15px',
-                  color: activeItem === item.id ? '#111827' : '#6B7280',
-                  fontWeight: activeItem === item.id ? '500' : '400',
-                  textAlign: 'left',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  if (activeItem !== item.id) {
-                    e.currentTarget.style.backgroundColor = '#F9FAFB';
-                    e.currentTarget.style.color = '#374151';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeItem !== item.id) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#6B7280';
-                  }
-                }}
+                onClick={() => handleNavigation(item)}
+                className={`menu-button ${activeItem === item.id ? 'active' : ''}`}
               >
-                <span style={{ fontSize: '18px' }}>{item.icon}</span>
+                <span className="menu-icon">{item.icon}</span>
                 {item.label}
               </button>
             </li>
@@ -116,36 +53,12 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      {/* User Profile & Logout */}
-      <div style={{ 
-        borderTop: '1px solid #E5E7EB', 
-        paddingTop: '20px'
-      }}>
+      <div className="logout-section">
         <button
           onClick={handleLogout}
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            backgroundColor: '#FEF2F2',
-            border: '1px solid #FECACA',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            cursor: 'pointer',
-            fontSize: '15px',
-            color: '#DC2626',
-            fontWeight: '500',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#FEE2E2';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#FEF2F2';
-          }}
+          className="logout-button"
         >
-          <span>🚪</span>
+          <span className="logout-icon">🚪</span>
           Logout
         </button>
       </div>

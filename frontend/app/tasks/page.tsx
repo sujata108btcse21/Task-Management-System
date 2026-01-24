@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getAllTasks, addTask, updateTask, deleteTask, type Task } from '../../lib/tasks';
+import './styles.css';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -115,60 +116,28 @@ export default function TasksPage() {
   };
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '32px'
-      }}>
+    <div className="tasks-container">
+      <div className="tasks-header">
         <div>
-          <h1 style={{
-            fontSize: '30px',
-            fontWeight: '700',
-            color: '#111827',
-            marginBottom: '4px'
-          }}>
+          <h1 className="tasks-title">
             All Tasks
           </h1>
-          <p style={{
-            fontSize: '14px',
-            color: '#6B7280'
-          }}>
+          <p className="tasks-subtitle">
             Manage your tasks efficiently
           </p>
         </div>
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <div style={{ position: 'relative' }}>
+        <div className="header-actions">
+          <div className="search-container">
             <input
               type="text"
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                padding: '10px 16px 10px 40px',
-                border: '1px solid #E5E7EB',
-                borderRadius: '8px',
-                fontSize: '14px',
-                width: '250px',
-                backgroundColor: 'white'
-              }}
+              className="search-input"
             />
             <svg
-              style={{
-                position: 'absolute',
-                left: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '18px',
-                height: '18px',
-                color: '#9CA3AF'
-              }}
+              className="search-icon"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -179,19 +148,7 @@ export default function TasksPage() {
 
           <button
             onClick={() => setShowAddTask(true)}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#3B82F6',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '14px',
-              color: 'white',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
+            className="add-task-button"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 4V20M20 12H4"
@@ -206,33 +163,14 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '20px',
-        marginBottom: '32px'
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #E5E7EB'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-content">
             <div>
-              <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '4px' }}>Total Tasks</p>
-              <p style={{ fontSize: '24px', fontWeight: '700', color: '#111827' }}>{tasks.length}</p>
+              <p className="stat-label">Total Tasks</p>
+              <p className="stat-value">{tasks.length}</p>
             </div>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              backgroundColor: '#3B82F610',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
+            <div className="stat-icon total">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5M12 12H15M12 16H15M9 12H9.01M9 16H9.01"
                   stroke="#3B82F6"
@@ -244,29 +182,15 @@ export default function TasksPage() {
           </div>
         </div>
 
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #E5E7EB'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="stat-card">
+          <div className="stat-content">
             <div>
-              <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '4px' }}>Completed</p>
-              <p style={{ fontSize: '24px', fontWeight: '700', color: '#111827' }}>
+              <p className="stat-label">Completed</p>
+              <p className="stat-value">
                 {tasks.filter(t => t.status === 'completed').length}
               </p>
             </div>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              backgroundColor: '#10B98110',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
+            <div className="stat-icon completed">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
                   stroke="#10B981"
@@ -279,29 +203,15 @@ export default function TasksPage() {
           </div>
         </div>
 
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #E5E7EB'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="stat-card">
+          <div className="stat-content">
             <div>
-              <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '4px' }}>In Progress</p>
-              <p style={{ fontSize: '24px', fontWeight: '700', color: '#111827' }}>
+              <p className="stat-label">In Progress</p>
+              <p className="stat-value">
                 {tasks.filter(t => t.status === 'in-progress').length}
               </p>
             </div>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              backgroundColor: '#F59E0B10',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
+            <div className="stat-icon in-progress">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 8V12L14 14M12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4Z"
                   stroke="#F59E0B"
@@ -314,29 +224,15 @@ export default function TasksPage() {
           </div>
         </div>
 
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #E5E7EB'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="stat-card">
+          <div className="stat-content">
             <div>
-              <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '4px' }}>Pending</p>
-              <p style={{ fontSize: '24px', fontWeight: '700', color: '#111827' }}>
+              <p className="stat-label">Pending</p>
+              <p className="stat-value">
                 {tasks.filter(t => t.status === 'pending').length}
               </p>
             </div>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              backgroundColor: '#EF444410',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
+            <div className="stat-icon pending">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 8V12L15 15M12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4Z"
                   stroke="#EF4444"
@@ -350,105 +246,35 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        border: '1px solid #E5E7EB',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 2fr 1fr 120px',
-          padding: '16px 20px',
-          backgroundColor: '#F9FAFB',
-          borderBottom: '1px solid #E5E7EB'
-        }}>
-          <div style={{
-            fontSize: '12px',
-            fontWeight: '600',
-            color: '#6B7280',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}>
-            Department
-          </div>
-          <div style={{
-            fontSize: '12px',
-            fontWeight: '600',
-            color: '#6B7280',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}>
-            Task
-          </div>
-          <div style={{
-            fontSize: '12px',
-            fontWeight: '600',
-            color: '#6B7280',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}>
-            Priority
-          </div>
-          <div style={{
-            fontSize: '12px',
-            fontWeight: '600',
-            color: '#6B7280',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}>
-            Actions
-          </div>
+      <div className="tasks-table-container">
+        <div className="table-header">
+          <div className="header-cell department">Department</div>
+          <div className="header-cell task">Task</div>
+          <div className="header-cell priority">Priority</div>
+          <div className="header-cell actions">Actions</div>
         </div>
 
         {filteredTasks.map((task, index) => (
           <div
             key={task.id}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 2fr 1fr 120px',
-              padding: '16px 20px',
-              borderBottom: index !== filteredTasks.length - 1 ? '1px solid #E5E7EB' : 'none',
-              alignItems: 'center',
-              backgroundColor: task.status === 'completed' ? '#F9FAFB' : 'white'
-            }}
+            className={`task-row ${task.status === 'completed' ? 'completed' : ''}`}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: getDepartmentColor(task.department)
-              }}></div>
-              <span style={{
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#111827'
-              }}>
-                {task.department}
-              </span>
+            <div className="task-cell department-cell">
+              <div className="department-info">
+                <div 
+                  className="department-dot"
+                  style={{ backgroundColor: getDepartmentColor(task.department) }}
+                ></div>
+                <span className="department-name">
+                  {task.department}
+                </span>
+              </div>
             </div>
 
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
+            <div className="task-cell task-cell-content">
               <button
                 onClick={() => toggleTaskStatus(task.id)}
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '4px',
-                  border: task.status === 'completed' ? 'none' : '2px solid #D1D5DB',
-                  backgroundColor: task.status === 'completed' ? '#10B981' : 'transparent',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}
+                className={`status-toggle ${task.status === 'completed' ? 'checked' : ''}`}
               >
                 {task.status === 'completed' && (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -461,107 +287,51 @@ export default function TasksPage() {
                   </svg>
                 )}
               </button>
-              <span style={{
-                fontSize: '14px',
-                color: task.status === 'completed' ? '#9CA3AF' : '#374151',
-                textDecoration: task.status === 'completed' ? 'line-through' : 'none'
-              }}>
+              <span className={`task-description ${task.status === 'completed' ? 'completed' : ''}`}>
                 {task.task}
               </span>
             </div>
 
-            <div style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              color: getPriorityColor(task.priority),
-              textAlign: 'start'
-            }}>
-              {task.priority}
+            <div className="task-cell priority-cell">
+              <span 
+                className="priority-text"
+                style={{ color: getPriorityColor(task.priority) }}
+              >
+                {task.priority}
+              </span>
             </div>
 
-            <div style={{
-              display: 'flex',
-              gap: '8px',
-              justifyContent: 'flex-end'
-            }}>
-              <button
-                onClick={() => handleEditTask(task.id)}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: '#3B82F6',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  color: 'white',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDeleteTask(task.id)}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: '#EF4444',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  color: 'white',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                Delete
-              </button>
+            <div className="task-cell actions-cell">
+              <div className="action-buttons">
+                <button
+                  onClick={() => handleEditTask(task.id)}
+                  className="edit-button"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteTask(task.id)}
+                  className="delete-button"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         ))}
 
         {filteredTasks.length === 0 && (
-          <div style={{
-            padding: '40px 20px',
-            textAlign: 'center',
-            color: '#6B7280'
-          }}>
+          <div className="empty-state">
             <p>No tasks found matching your search</p>
           </div>
         )}
       </div>
 
       {showAddTask && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '30px',
-            width: '100%',
-            maxWidth: '500px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '24px'
-            }}>
-              <h2 style={{
-                fontSize: '20px',
-                fontWeight: '600',
-                color: '#111827'
-              }}>
+        <div className="modal-overlay">
+          <div className="add-task-modal">
+            <div className="modal-header">
+              <h2 className="modal-title">
                 {editingIndex !== null ? 'Edit Task' : 'Add New Task'}
               </h2>
               <button
@@ -576,46 +346,21 @@ export default function TasksPage() {
                     dueDate: ''
                   });
                 }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  color: '#6B7280',
-                  cursor: 'pointer',
-                  padding: '0',
-                  width: '30px',
-                  height: '30px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%'
-                }}
+                className="modal-close-button"
               >
                 ×
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '6px'
-                }}>
+            <div className="modal-form">
+              <div className="form-group">
+                <label className="form-label">
                   Department
                 </label>
                 <select
                   value={newTask.department}
                   onChange={(e) => setNewTask({ ...newTask, department: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
+                  className="form-select"
                 >
                   {departments.map(dept => (
                     <option key={dept} value={dept}>{dept}</option>
@@ -623,14 +368,8 @@ export default function TasksPage() {
                 </select>
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '6px'
-                }}>
+              <div className="form-group">
+                <label className="form-label">
                   Task Description
                 </label>
                 <textarea
@@ -638,61 +377,30 @@ export default function TasksPage() {
                   onChange={(e) => setNewTask({ ...newTask, task: e.target.value })}
                   placeholder="Enter task description..."
                   rows={3}
-                  style={{
-                    width: '96%',
-                    padding: '10px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
+                  className="form-textarea"
                 />
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '6px'
-                }}>
+              <div className="form-group">
+                <label className="form-label">
                   Due Date
                 </label>
                 <input
                   type="date"
                   value={newTask.dueDate}
                   onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
+                  className="form-input"
                 />
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '6px'
-                }}>
+              <div className="form-group">
+                <label className="form-label">
                   Priority
                 </label>
                 <select
                   value={newTask.priority}
                   onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
+                  className="form-select"
                 >
                   {priorities.map(priority => (
                     <option key={priority} value={priority}>{priority}</option>
@@ -700,26 +408,14 @@ export default function TasksPage() {
                 </select>
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '6px'
-                }}>
+              <div className="form-group">
+                <label className="form-label">
                   Status
                 </label>
                 <select
                   value={newTask.status}
                   onChange={(e) => setNewTask({ ...newTask, status: e.target.value as 'pending' | 'in-progress' | 'completed' })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
+                  className="form-select"
                 >
                   <option value="pending">Pending</option>
                   <option value="in-progress">In Progress</option>
@@ -728,24 +424,10 @@ export default function TasksPage() {
               </div>
             </div>
 
-            <div style={{
-              display: 'flex',
-              gap: '12px',
-              marginTop: '24px'
-            }}>
+            <div className="modal-actions">
               <button
                 onClick={handleAddTask}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#3B82F6',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  color: 'white',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
+                className="save-button"
               >
                 {editingIndex !== null ? 'Update Task' : 'Add Task'}
               </button>
@@ -761,17 +443,7 @@ export default function TasksPage() {
                     dueDate: ''
                   });
                 }}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#6B7280',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  color: 'white',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
+                className="cancel-button"
               >
                 Cancel
               </button>

@@ -17,8 +17,12 @@ import {
   formatMeetingDate,
   type Meeting
 } from '../../lib/meetings';
+import { getUserData } from '../../lib/user';
+import { useRouter } from 'next/navigation';
+import './styles.css';
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showAllTasks, setShowAllTasks] = useState(false);
@@ -29,8 +33,19 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState<any[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showAllMeetings, setShowAllMeetings] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const [user, setUser] = useState(() => getUserData());
 
   useEffect(() => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated');
+    if (!isAuthenticated || isAuthenticated !== 'true') {
+      router.push('/');
+      return;
+    }
+
+    setUser(getUserData());
+
     const loadedTasks = getAllTasks();
     setTasks(loadedTasks);
 
@@ -39,14 +54,7 @@ export default function DashboardPage() {
 
     const recentActivities = getRecentActivities(4);
     setActivities(recentActivities);
-  }, []);
-
-  const [user, setUser] = useState({
-    name: 'Jacob Doe',
-    email: 'jacob.doe@example.com',
-    initials: 'JM',
-    role: 'Admin'
-  });
+  }, [router]);
 
   const getFilteredTasks = () => {
     if (showAllTasks) {
@@ -151,7 +159,6 @@ export default function DashboardPage() {
       }
     }
   };
-
 
   const getFilteredActivities = () => {
     switch (selectedFilter) {
@@ -274,15 +281,8 @@ export default function DashboardPage() {
   const stats = getStats(meetings);
   const filteredTasks = getFilteredTasks();
   const recentActivities = getFilteredActivities();
-  const [currentDate, setCurrentDate] = useState(new Date());
 
   const CalendarView = () => {
-    const [meetings, setMeetings] = useState<Meeting[]>([]);
-
-    useEffect(() => {
-      setMeetings(getAllMeetings());
-    }, []);
-
     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
     const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
 
@@ -326,14 +326,6 @@ export default function DashboardPage() {
         <div
           key={day}
           className="calendar-day"
-          style={{
-            padding: '8px',
-            border: '1px solid #E5E7EB',
-            minHeight: '120px',
-            position: 'relative',
-            backgroundColor: day === new Date().getDate() ? '#F0F9FF' : 'white',
-            cursor: 'pointer'
-          }}
           onClick={() => {
             console.log(`Clicked on day ${day}`, {
               meetings: dayMeetings,
@@ -341,78 +333,33 @@ export default function DashboardPage() {
             });
           }}
         >
-          <div style={{
-            fontSize: '14px',
-            fontWeight: '600',
-            marginBottom: '4px',
-            color: day === new Date().getDate() ? '#3B82F6' : '#111827'
-          }}>
+          <div className="calendar-day-number">
             {day}
           </div>
 
           {scheduledMeetings.length > 0 && (
-            <div style={{
-              fontSize: '9px',
-              padding: '1px 4px',
-              backgroundColor: '#3B82F6',
-              color: 'white',
-              borderRadius: '3px',
-              marginBottom: '2px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '2px'
-            }}>
+            <div className="calendar-meeting-indicator scheduled">
               <span>📅</span>
               <span>{scheduledMeetings.length} meeting{scheduledMeetings.length > 1 ? 's' : ''}</span>
             </div>
           )}
 
           {completedMeetings.length > 0 && (
-            <div style={{
-              fontSize: '9px',
-              padding: '1px 4px',
-              backgroundColor: '#10B981',
-              color: 'white',
-              borderRadius: '3px',
-              marginBottom: '2px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '2px'
-            }}>
+            <div className="calendar-meeting-indicator completed">
               <span>✓</span>
               <span>{completedMeetings.length} completed</span>
             </div>
           )}
 
           {cancelledMeetings.length > 0 && (
-            <div style={{
-              fontSize: '9px',
-              padding: '1px 4px',
-              backgroundColor: '#EF4444',
-              color: 'white',
-              borderRadius: '3px',
-              marginBottom: '2px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '2px'
-            }}>
+            <div className="calendar-meeting-indicator cancelled">
               <span>✗</span>
               <span>{cancelledMeetings.length} cancelled</span>
             </div>
           )}
 
           {dayDeadlines.length > 0 && (
-            <div style={{
-              fontSize: '9px',
-              padding: '1px 4px',
-              backgroundColor: '#F59E0B',
-              color: 'white',
-              borderRadius: '3px',
-              marginBottom: '2px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '2px'
-            }}>
+            <div className="calendar-deadline-indicator">
               <span>⏰</span>
               <span>{dayDeadlines.length} deadline{dayDeadlines.length > 1 ? 's' : ''}</span>
             </div>
@@ -421,19 +368,8 @@ export default function DashboardPage() {
           {dayMeetings.slice(0, 1).map(meeting => (
             <div
               key={meeting.id}
+              className="calendar-meeting-item"
               style={{
-                fontSize: '10px',
-                padding: '2px 4px',
-                backgroundColor:
-                  meeting.status === 'scheduled' ? '#3B82F6' :
-                    meeting.status === 'completed' ? '#10B981' : '#EF4444',
-                color: 'white',
-                borderRadius: '4px',
-                marginBottom: '2px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                cursor: 'pointer',
                 borderLeft: `3px solid ${meeting.type === 'Client Meeting' ? '#8B5CF6' :
                   meeting.type === 'Planning' ? '#EC4899' :
                     meeting.type === 'Demo' ? '#10B981' :
@@ -453,21 +389,13 @@ export default function DashboardPage() {
           {dayTasks.slice(0, 1).map(task => (
             <div
               key={task.id}
+              className="calendar-task-item"
               style={{
-                fontSize: '10px',
-                padding: '2px 4px',
                 backgroundColor:
                   task.status === 'completed' ? '#10B981' :
                     task.priority.includes('1') || task.priority.includes('2') ? '#EF4444' :
                       task.priority.includes('3') || task.priority.includes('4') ? '#F59E0B' :
-                        '#6B7280',
-                color: 'white',
-                borderRadius: '4px',
-                marginBottom: '2px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                cursor: 'pointer'
+                        '#6B7280'
               }}
               title={`${task.task} (${getPriorityText(task.priority)} Priority)`}
               onClick={(e) => {
@@ -480,13 +408,7 @@ export default function DashboardPage() {
           ))}
 
           {(dayMeetings.length > 1 || dayTasks.length > 1) && (
-            <div style={{
-              fontSize: '8px',
-              color: '#6B7280',
-              textAlign: 'center',
-              cursor: 'pointer',
-              marginTop: '2px'
-            }} title={`Click to see all items`}>
+            <div className="calendar-more-items">
               +{dayMeetings.length + dayTasks.length - 2} more
             </div>
           )}
@@ -500,7 +422,6 @@ export default function DashboardPage() {
       .slice(0, showAllTasks ? 20 : 6);
 
     const upcomingMeetings = getUpcomingMeetings(30);
-
     const meetingsToShow = showAllMeetings ? upcomingMeetings : upcomingMeetings.slice(0, 8);
 
     const clientMeetings = meetingsToShow.filter(m => m.type === 'Client Meeting');
@@ -512,163 +433,78 @@ export default function DashboardPage() {
     );
 
     return (
-      <div style={{ marginTop: '32px' }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px'
-        }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>
+      <div className="calendar-view">
+        <div className="calendar-header">
+          <h3>
             {currentDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}
           </h3>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="calendar-navigation">
             <button
               onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: '#F3F4F6',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
+              className="calendar-nav-button"
             >
               Previous
             </button>
             <button
               onClick={() => setCurrentDate(new Date())}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: '#3B82F6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
+              className="calendar-today-button"
             >
               Today
             </button>
             <button
               onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: '#F3F4F6',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
+              className="calendar-nav-button"
             >
               Next
             </button>
           </div>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: '4px',
-          marginBottom: '20px'
-        }}>
+        <div className="calendar-grid">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} style={{
-              padding: '12px',
-              textAlign: 'center',
-              fontWeight: '600',
-              color: '#6B7280',
-              backgroundColor: '#F9FAFB'
-            }}>
+            <div key={day} className="calendar-weekday">
               {day}
             </div>
           ))}
           {days}
         </div>
 
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '24px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #E5E7EB',
-          marginBottom: '24px'
-        }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+        <div className="calendar-events-section">
+          <div className="calendar-events-grid">
             <div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '16px'
-              }}>
-                <h4 style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  color: '#111827',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
+              <div className="calendar-section-header">
+                <h4>
                   <span>📅</span>
                   Upcoming Meetings ({upcomingMeetings.length})
                 </h4>
                 <button
                   onClick={() => setShowAllMeetings(!showAllMeetings)}
-                  style={{
-                    padding: '6px 12px',
-                    backgroundColor: showAllMeetings ? '#8B5CF6' : 'transparent',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    color: showAllMeetings ? 'white' : '#6B7280',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  className={`view-all-button ${showAllMeetings ? 'active' : ''}`}
                 >
                   {showAllMeetings ? 'Show Less' : 'View All'}
                 </button>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="meetings-list">
                 {showAllMeetings ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="meetings-grid">
                     {meetingsToShow.map(meeting => (
                       <div
                         key={meeting.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '12px',
-                          padding: '12px',
-                          border: '1px solid #E5E7EB',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          backgroundColor: '#F9FAFB',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#F3F4F6';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#F9FAFB';
-                        }}
+                        className="meeting-card full-view"
                       >
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '6px',
-                          backgroundColor:
-                            meeting.type === 'Client Meeting' ? '#8B5CF6' :
-                              meeting.type === 'Planning' ? '#EC4899' :
-                                meeting.type === 'Demo' ? '#10B981' :
-                                  meeting.type === 'Scrum' ? '#3B82F6' :
-                                    meeting.type === 'Team Meeting' ? '#3B82F6' :
-                                      '#F59E0B',
-                          color: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          fontSize: '14px'
-                        }}>
+                        <div
+                          className="meeting-icon"
+                          style={{
+                            backgroundColor:
+                              meeting.type === 'Client Meeting' ? '#8B5CF6' :
+                                meeting.type === 'Planning' ? '#EC4899' :
+                                  meeting.type === 'Demo' ? '#10B981' :
+                                    meeting.type === 'Scrum' ? '#3B82F6' :
+                                      meeting.type === 'Team Meeting' ? '#3B82F6' :
+                                        '#F59E0B'
+                          }}
+                        >
                           {meeting.type === 'Client Meeting' ? '🤝' :
                             meeting.type === 'Planning' ? '📅' :
                               meeting.type === 'Demo' ? '🎬' :
@@ -676,52 +512,20 @@ export default function DashboardPage() {
                                   meeting.type === 'Team Meeting' ? '👥' :
                                     '📅'}
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <p style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            marginBottom: '4px',
-                            color: '#111827'
-                          }}>
+                        <div className="meeting-details">
+                          <p className="meeting-title">
                             {meeting.title}
                           </p>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            fontSize: '12px',
-                            color: '#6B7280',
-                            marginBottom: '4px'
-                          }}>
+                          <div className="meeting-time">
                             <span>{formatMeetingDate(new Date(meeting.date))}</span>
                             <span>•</span>
                             <span>{formatMeetingTime(meeting.startTime)} - {formatMeetingTime(meeting.endTime)}</span>
                           </div>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px'
-                          }}>
-                            <span style={{
-                              fontSize: '11px',
-                              padding: '2px 8px',
-                              backgroundColor: meeting.status === 'scheduled' ? '#DBEAFE' :
-                                meeting.status === 'completed' ? '#D1FAE5' : '#FEE2E2',
-                              color: meeting.status === 'scheduled' ? '#1D4ED8' :
-                                meeting.status === 'completed' ? '#059669' : '#DC2626',
-                              borderRadius: '12px',
-                              fontWeight: '500'
-                            }}>
+                          <div className="meeting-tags">
+                            <span className={`meeting-status ${meeting.status}`}>
                               {meeting.status}
                             </span>
-                            <span style={{
-                              fontSize: '11px',
-                              padding: '2px 8px',
-                              backgroundColor: '#F3F4F6',
-                              color: '#6B7280',
-                              borderRadius: '12px',
-                              fontWeight: '500'
-                            }}>
+                            <span className="meeting-duration">
                               {meeting.duration}
                             </span>
                           </div>
@@ -733,68 +537,22 @@ export default function DashboardPage() {
                   <>
                     {clientMeetings.length > 0 && (
                       <div>
-                        <div style={{
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          color: '#6B7280',
-                          marginBottom: '8px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em'
-                        }}>
+                        <div className="meeting-category-title">
                           Client Meetings ({clientMeetings.length})
                         </div>
                         {clientMeetings.slice(0, 3).map(meeting => (
                           <div
                             key={meeting.id}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              gap: '12px',
-                              padding: '12px',
-                              border: '1px solid #E5E7EB',
-                              borderRadius: '8px',
-                              marginBottom: '8px',
-                              cursor: 'pointer',
-                              backgroundColor: '#F9FAFB',
-                              transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = '#F3F4F6';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = '#F9FAFB';
-                            }}
+                            className="meeting-card client"
                           >
-                            <div style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '6px',
-                              backgroundColor: '#8B5CF6',
-                              color: 'white',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0,
-                              fontSize: '14px'
-                            }}>
+                            <div className="meeting-icon" style={{ backgroundColor: '#8B5CF6' }}>
                               🤝
                             </div>
-                            <div style={{ flex: 1 }}>
-                              <p style={{
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                marginBottom: '4px',
-                                color: '#111827'
-                              }}>
+                            <div className="meeting-details">
+                              <p className="meeting-title">
                                 {meeting.title}
                               </p>
-                              <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                fontSize: '12px',
-                                color: '#6B7280'
-                              }}>
+                              <div className="meeting-time">
                                 <span>{formatMeetingDate(new Date(meeting.date))}</span>
                                 <span>•</span>
                                 <span>{formatMeetingTime(meeting.startTime)} - {formatMeetingTime(meeting.endTime)}</span>
@@ -807,62 +565,22 @@ export default function DashboardPage() {
 
                     {teamMeetings.length > 0 && (
                       <div>
-                        <div style={{
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          color: '#6B7280',
-                          marginBottom: '8px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em'
-                        }}>
+                        <div className="meeting-category-title">
                           Team Meetings ({teamMeetings.length})
                         </div>
                         {teamMeetings.slice(0, 2).map(meeting => (
                           <div
                             key={meeting.id}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              gap: '12px',
-                              padding: '12px',
-                              border: '1px solid #E5E7EB',
-                              borderRadius: '8px',
-                              marginBottom: '8px',
-                              cursor: 'pointer',
-                              backgroundColor: '#F0F9FF',
-                              transition: 'all 0.2s ease'
-                            }}
+                            className="meeting-card team"
                           >
-                            <div style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '6px',
-                              backgroundColor: '#3B82F6',
-                              color: 'white',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0,
-                              fontSize: '14px'
-                            }}>
+                            <div className="meeting-icon" style={{ backgroundColor: '#3B82F6' }}>
                               👥
                             </div>
-                            <div style={{ flex: 1 }}>
-                              <p style={{
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                marginBottom: '4px',
-                                color: '#111827'
-                              }}>
+                            <div className="meeting-details">
+                              <p className="meeting-title">
                                 {meeting.title}
                               </p>
-                              <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                fontSize: '12px',
-                                color: '#6B7280'
-                              }}>
+                              <div className="meeting-time">
                                 <span>{formatMeetingDate(new Date(meeting.date))}</span>
                                 <span>•</span>
                                 <span>{formatMeetingTime(meeting.startTime)} - {formatMeetingTime(meeting.endTime)}</span>
@@ -875,62 +593,22 @@ export default function DashboardPage() {
 
                     {otherMeetings.length > 0 && (
                       <div>
-                        <div style={{
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          color: '#6B7280',
-                          marginBottom: '8px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em'
-                        }}>
+                        <div className="meeting-category-title">
                           Other Meetings ({otherMeetings.length})
                         </div>
                         {otherMeetings.slice(0, 2).map(meeting => (
                           <div
                             key={meeting.id}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              gap: '12px',
-                              padding: '12px',
-                              border: '1px solid #E5E7EB',
-                              borderRadius: '8px',
-                              marginBottom: '8px',
-                              cursor: 'pointer',
-                              backgroundColor: '#FEF3C7',
-                              transition: 'all 0.2s ease'
-                            }}
+                            className="meeting-card other"
                           >
-                            <div style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '6px',
-                              backgroundColor: '#F59E0B',
-                              color: 'white',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0,
-                              fontSize: '14px'
-                            }}>
+                            <div className="meeting-icon" style={{ backgroundColor: '#F59E0B' }}>
                               📅
                             </div>
-                            <div style={{ flex: 1 }}>
-                              <p style={{
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                marginBottom: '4px',
-                                color: '#111827'
-                              }}>
+                            <div className="meeting-details">
+                              <p className="meeting-title">
                                 {meeting.title}
                               </p>
-                              <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                fontSize: '12px',
-                                color: '#6B7280'
-                              }}>
+                              <div className="meeting-time">
                                 <span>{formatMeetingDate(new Date(meeting.date))}</span>
                                 <span>•</span>
                                 <span>{formatMeetingTime(meeting.startTime)} - {formatMeetingTime(meeting.endTime)}</span>
@@ -946,102 +624,43 @@ export default function DashboardPage() {
             </div>
 
             <div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '16px'
-              }}>
-                <h4 style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  marginBottom: '12px',
-                  color: '#111827',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
+              <div className="calendar-section-header">
+                <h4>
                   <span>📝</span>
                   Upcoming Tasks ({upcomingEvents.length})
                 </h4>
                 <button
                   onClick={() => setShowAllTasks(!showAllTasks)}
-                  style={{
-                    padding: '6px 12px',
-                    backgroundColor: showAllTasks ? '#3B82F6' : 'transparent',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    color: showAllTasks ? 'white' : '#6B7280',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  className={`view-all-button ${showAllTasks ? 'active' : ''}`}
                 >
                   {showAllTasks ? 'Show Less' : 'View All'}
                 </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="upcoming-tasks-list">
                 {upcomingEvents.map(event => (
                   <div
                     key={event.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '12px',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
+                    className="upcoming-task-item"
                     onClick={() => handleEditTask(event)}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#F9FAFB';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'white';
-                    }}
                   >
-                    <div style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      backgroundColor:
-                        getPriorityText(event.priority) === 'High' ? '#EF4444' :
-                          getPriorityText(event.priority) === 'Medium' ? '#F59E0B' : '#10B981'
-                    }}></div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        marginBottom: '2px',
-                        color: '#111827'
-                      }}>
+                    <div
+                      className="task-priority-dot"
+                      style={{
+                        backgroundColor:
+                          getPriorityText(event.priority) === 'High' ? '#EF4444' :
+                            getPriorityText(event.priority) === 'Medium' ? '#F59E0B' : '#10B981'
+                      }}
+                    ></div>
+                    <div className="task-details">
+                      <p className="task-name">
                         {event.task}
                       </p>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '12px',
-                        color: '#6B7280'
-                      }}>
+                      <div className="task-meta">
                         <span>{event.dueDate?.toLocaleDateString()}</span>
                         <span>•</span>
                         <span>{event.department}</span>
                         <span>•</span>
-                        <span style={{
-                          padding: '2px 6px',
-                          backgroundColor:
-                            getPriorityText(event.priority) === 'High' ? '#FEE2E2' :
-                              getPriorityText(event.priority) === 'Medium' ? '#FEF3C7' : '#D1FAE5',
-                          color:
-                            getPriorityText(event.priority) === 'High' ? '#DC2626' :
-                              getPriorityText(event.priority) === 'Medium' ? '#D97706' : '#059669',
-                          borderRadius: '4px',
-                          fontSize: '10px',
-                          fontWeight: '500'
-                        }}>
+                        <span className={`priority-tag ${getPriorityText(event.priority).toLowerCase()}`}>
                           {getPriorityText(event.priority)}
                         </span>
                       </div>
@@ -1068,27 +687,13 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '24px' }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '32px',
-        position: 'relative'
-      }}>
+    <div className="dashboard-container">
+      <div className="dashboard-header">
         <div>
-          <h1 style={{
-            fontSize: '32px',
-            fontWeight: '700',
-            color: '#111827',
-            marginBottom: '8px'
-          }}>
+          <h1 className="dashboard-title">
             Dashboard
           </h1>
-          <p style={{
-            fontSize: '16px',
-            color: '#6B7280'
-          }}>
+          <p className="dashboard-subtitle">
             {selectedFilter === 'All' ? 'Welcome! Here\'s what\'s happening.' :
               selectedFilter === 'Today' ? 'Today\'s overview' :
                 selectedFilter === 'This Week' ? 'This week\'s activities' :
@@ -1096,18 +701,8 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px'
-        }}>
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            backgroundColor: '#F3F4F6',
-            padding: '4px',
-            borderRadius: '8px'
-          }}>
+        <div className="header-controls">
+          <div className="filter-tabs">
             {['All', 'Today', 'This Week', 'Calendar'].map((filter) => (
               <button
                 key={filter}
@@ -1115,113 +710,37 @@ export default function DashboardPage() {
                   setSelectedFilter(filter);
                   setShowAllTasks(false);
                 }}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: selectedFilter === filter ? 'white' : 'transparent',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: selectedFilter === filter ? '#111827' : '#6B7280',
-                  cursor: 'pointer',
-                  boxShadow: selectedFilter === filter ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                  outline: 'none'
-                }}
+                className={`filter-tab ${selectedFilter === filter ? 'active' : ''}`}
               >
                 {filter}
               </button>
             ))}
           </div>
 
-          <div style={{ position: 'relative' }} ref={dropdownRef}>
+          <div className="user-dropdown-container" ref={dropdownRef}>
             <button
               onClick={() => setShowUserDropdown(!showUserDropdown)}
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                backgroundColor: '#3B82F6',
-                color: 'white',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: '600',
-                fontSize: '16px',
-                cursor: 'pointer',
-                outline: 'none',
-                transition: 'transform 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              className="user-avatar-button"
             >
               {user.initials}
             </button>
 
             {showUserDropdown && (
-              <div style={{
-                position: 'absolute',
-                top: '50px',
-                right: '0',
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-                border: '1px solid #E5E7EB',
-                minWidth: '280px',
-                zIndex: 1000,
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  padding: '20px',
-                  borderBottom: '1px solid #F3F4F6'
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    marginBottom: '16px'
-                  }}>
-                    <div style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      backgroundColor: '#3B82F6',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: '600',
-                      fontSize: '18px'
-                    }}>
-                      {user.initials}
-                    </div>
-                    <div>
-                      <p style={{
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        color: '#111827',
-                        marginBottom: '4px'
-                      }}>
-                        {user.name}
-                      </p>
-                      <p style={{
-                        fontSize: '14px',
-                        color: '#6B7280',
-                        marginBottom: '8px'
-                      }}>
-                        {user.email}
-                      </p>
-                      <span style={{
-                        fontSize: '12px',
-                        padding: '4px 10px',
-                        backgroundColor: '#F3F4F6',
-                        color: '#6B7280',
-                        borderRadius: '12px',
-                        fontWeight: '500'
-                      }}>
-                        {user.role}
-                      </span>
-                    </div>
+              <div className="user-dropdown">
+                <div className="user-profile">
+                  <div className="user-avatar-large">
+                    {user.initials}
+                  </div>
+                  <div>
+                    <p className="user-name">
+                      {user.name}
+                    </p>
+                    <p className="user-email">
+                      {user.email}
+                    </p>
+                    <span className="user-role">
+                      {user.role}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1230,46 +749,22 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '24px',
-        marginBottom: '32px'
-      }}>
+      <div className="stats-grid">
         {stats.map((stat, index) => (
-          <div key={index} style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #E5E7EB'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div key={index} className="stat-card">
+            <div className="stat-header">
               <div>
-                <p style={{
-                  fontSize: '14px',
-                  color: '#6B7280',
-                  marginBottom: '8px'
-                }}>
+                <p className="stat-title">
                   {stat.title}
                 </p>
-                <p style={{
-                  fontSize: '32px',
-                  fontWeight: '700',
-                  color: '#111827'
-                }}>
+                <p className="stat-value">
                   {stat.value}
                 </p>
               </div>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '8px',
-                backgroundColor: `${stat.color}15`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
+              <div
+                className="stat-icon"
+                style={{ backgroundColor: `${stat.color}15` }}
+              >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 6V18M18 12L12 18L6 12"
                     stroke={stat.color}
@@ -1280,11 +775,7 @@ export default function DashboardPage() {
                 </svg>
               </div>
             </div>
-            <p style={{
-              fontSize: '14px',
-              color: stat.change.includes('+') ? '#10B981' : stat.change.includes('-') ? '#EF4444' : '#6B7280',
-              marginTop: '12px'
-            }}>
+            <p className={`stat-change ${stat.change.includes('+') ? 'positive' : stat.change.includes('-') ? 'negative' : ''}`}>
               {stat.change} from last period
             </p>
           </div>
@@ -1294,163 +785,83 @@ export default function DashboardPage() {
       {selectedFilter === 'Calendar' ? (
         <CalendarView />
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '2fr 1fr',
-          gap: '32px'
-        }}>
-          <div>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              marginBottom: '32px',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-              border: '1px solid #E5E7EB'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '24px'
-              }}>
-                <h2 style={{
-                  fontSize: '20px',
-                  fontWeight: '600',
-                  color: '#111827'
-                }}>
+        <div className="dashboard-content">
+          <div className="tasks-section">
+            <div className="tasks-container">
+              <div className="section-header">
+                <h2>
                   {selectedFilter === 'All' ? 'Recent Tasks' :
                     selectedFilter === 'Today' ? 'Today\'s Tasks' :
                       'This Week\'s Tasks'}
                 </h2>
                 <button
                   onClick={() => setShowAllTasks(!showAllTasks)}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: showAllTasks ? '#3B82F6' : 'transparent',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    color: showAllTasks ? 'white' : '#6B7280',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  className={`view-all-button ${showAllTasks ? 'active' : ''}`}
                 >
                   {showAllTasks ? 'Show Less' : 'View All'}
                 </button>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div className="tasks-list">
                 {filteredTasks.map((task, index) => (
-                  <div key={task.id} style={{
-                    padding: '20px',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '8px',
-                    backgroundColor: index === 0 && !showAllTasks ? '#F0F9FF' : 'white'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <div
+                    key={task.id}
+                    className={`task-item ${index === 0 && !showAllTasks ? 'highlighted' : ''}`}
+                  >
+                    <div className="task-header">
                       <div>
-                        <p style={{
-                          fontSize: '16px',
-                          fontWeight: '600',
-                          color: '#111827',
-                          marginBottom: '4px'
-                        }}>
+                        <p className="task-title">
                           {task.task}
                         </p>
-                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                          <span style={{
-                            fontSize: '14px',
-                            color: '#6B7280',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <div style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor:
-                                getPriorityText(task.priority) === 'High' ? '#EF4444' :
-                                  getPriorityText(task.priority) === 'Medium' ? '#F59E0B' : '#10B981'
-                            }}></div>
+                        <div className="task-meta-info">
+                          <span className="priority-info">
+                            <div
+                              className="priority-dot"
+                              style={{
+                                backgroundColor:
+                                  getPriorityText(task.priority) === 'High' ? '#EF4444' :
+                                    getPriorityText(task.priority) === 'Medium' ? '#F59E0B' : '#10B981'
+                              }}
+                            ></div>
                             {getPriorityText(task.priority)} Priority
                           </span>
-                          <span style={{ fontSize: '14px', color: '#6B7280' }}>
+                          <span className="due-date">
                             Due: {getDueDate(task)}
                           </span>
-                          <span style={{
-                            fontSize: '14px',
-                            padding: '2px 8px',
-                            backgroundColor:
-                              task.status === 'completed' ? '#10B98120' :
-                                task.status === 'in-progress' ? '#3B82F620' :
-                                  '#F59E0B20',
-                            color:
-                              task.status === 'completed' ? '#10B981' :
-                                task.status === 'in-progress' ? '#3B82F6' :
-                                  '#F59E0B',
-                            borderRadius: '4px',
-                            fontWeight: '500'
-                          }}>
+                          <span className={`status-badge ${task.status}`}>
                             {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
                           </span>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div className="task-actions">
                         <button
                           onClick={() => handleEditTask(task)}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#F3F4F6',
-                            border: 'none',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            color: '#374151',
-                            cursor: 'pointer'
-                          }}
+                          className="edit-button"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleCompleteTask(task.id)}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: task.status === 'completed' ? '#6B7280' : '#10B981',
-                            border: 'none',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            color: 'white',
-                            cursor: 'pointer'
-                          }}
+                          className={`complete-button ${task.status === 'completed' ? 'completed' : ''}`}
                         >
                           {task.status === 'completed' ? 'Completed' : 'Complete'}
                         </button>
                       </div>
                     </div>
 
-                    <div>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        marginBottom: '8px'
-                      }}>
-                        <span style={{ fontSize: '14px', color: '#6B7280' }}>Progress</span>
-                        <span style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>{getProgress(task)}%</span>
+                    <div className="task-progress">
+                      <div className="progress-header">
+                        <span>Progress</span>
+                        <span>{getProgress(task)}%</span>
                       </div>
-                      <div style={{
-                        width: '100%',
-                        height: '6px',
-                        backgroundColor: '#E5E7EB',
-                        borderRadius: '3px',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          width: `${getProgress(task)}%`,
-                          height: '100%',
-                          backgroundColor: getProgress(task) > 70 ? '#10B981' : getProgress(task) > 30 ? '#3B82F6' : '#F59E0B',
-                          borderRadius: '3px'
-                        }}></div>
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{
+                            width: `${getProgress(task)}%`,
+                            backgroundColor: getProgress(task) > 70 ? '#10B981' : getProgress(task) > 30 ? '#3B82F6' : '#F59E0B'
+                          }}
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -1459,48 +870,29 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              marginBottom: '32px',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-              border: '1px solid #E5E7EB'
-            }}>
-              <h2 style={{
-                fontSize: '20px',
-                fontWeight: '600',
-                color: '#111827',
-                marginBottom: '24px'
-              }}>
+          <div className="activities-section">
+            <div className="activities-container">
+              <h2>
                 Recent Activity
               </h2>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div className="activities-list">
                 {recentActivities.map((activity, index) => (
-                  <div key={index} style={{
-                    display: 'flex',
-                    gap: '12px'
-                  }}>
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '10px',
-                      backgroundColor:
-                        activity.action === 'completed' ? '#D1FAE5' :
-                          activity.action === 'uploaded' ? '#DBEAFE' :
-                            activity.action === 'commented' ? '#FEF3C7' :
-                              activity.action === 'assigned' ? '#E0E7FF' :
-                                activity.action === 'started' ? '#FCE7F3' :
-                                  activity.action === 'scheduled' ? '#FEF3C7' :
-                                    activity.action === 'reminder' ? '#FEE2E2' :
-                                      activity.action === 'auto-generated' ? '#E5E7EB' : '#F3F4F6',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}>
+                  <div key={index} className="activity-item">
+                    <div
+                      className="activity-icon"
+                      style={{
+                        backgroundColor:
+                          activity.action === 'completed' ? '#D1FAE5' :
+                            activity.action === 'uploaded' ? '#DBEAFE' :
+                              activity.action === 'commented' ? '#FEF3C7' :
+                                activity.action === 'assigned' ? '#E0E7FF' :
+                                  activity.action === 'started' ? '#FCE7F3' :
+                                    activity.action === 'scheduled' ? '#FEF3C7' :
+                                      activity.action === 'reminder' ? '#FEE2E2' :
+                                        activity.action === 'auto-generated' ? '#E5E7EB' : '#F3F4F6'
+                      }}
+                    >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         {activity.action === 'completed' ? (
                           <path d="M20 6L9 17L4 12" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -1522,19 +914,11 @@ export default function DashboardPage() {
                       </svg>
                     </div>
 
-                    <div style={{ flex: 1 }}>
-                      <p style={{
-                        fontSize: '14px',
-                        color: '#111827',
-                        marginBottom: '2px',
-                        lineHeight: '1.4'
-                      }}>
+                    <div className="activity-details">
+                      <p className="activity-description">
                         <strong>{activity.user}</strong> {activity.action} {activity.task}
                       </p>
-                      <p style={{
-                        fontSize: '12px',
-                        color: '#6B7280'
-                      }}>
+                      <p className="activity-time">
                         {activity.time}
                       </p>
                     </div>
@@ -1547,38 +931,10 @@ export default function DashboardPage() {
       )}
 
       {showEditModal && editingTask && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '30px',
-            width: '100%',
-            maxWidth: '500px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '24px'
-            }}>
-              <h2 style={{
-                fontSize: '20px',
-                fontWeight: '600',
-                color: '#111827'
-              }}>
+        <div className="modal-overlay">
+          <div className="edit-modal">
+            <div className="modal-header">
+              <h2>
                 Edit Task
               </h2>
               <button
@@ -1586,46 +942,20 @@ export default function DashboardPage() {
                   setShowEditModal(false);
                   setEditingTask(null);
                 }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  color: '#6B7280',
-                  cursor: 'pointer',
-                  padding: '0',
-                  width: '30px',
-                  height: '30px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%'
-                }}
+                className="modal-close-button"
               >
                 ×
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '6px'
-                }}>
+            <div className="modal-form">
+              <div className="form-group">
+                <label>
                   Department
                 </label>
                 <select
                   value={editingTask.department}
                   onChange={(e) => setEditingTask({ ...editingTask, department: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
                 >
                   {['Management', 'Sales', 'Operations', 'Marketing', 'Human Resources', 'Finance', 'Customer Service'].map(dept => (
                     <option key={dept} value={dept}>{dept}</option>
@@ -1633,14 +963,8 @@ export default function DashboardPage() {
                 </select>
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '6px'
-                }}>
+              <div className="form-group">
+                <label>
                   Task Description
                 </label>
                 <textarea
@@ -1648,25 +972,11 @@ export default function DashboardPage() {
                   onChange={(e) => setEditingTask({ ...editingTask, task: e.target.value })}
                   placeholder="Enter task description..."
                   rows={3}
-                  style={{
-                    width: '96%',
-                    padding: '10px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
                 />
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '6px'
-                }}>
+              <div className="form-group">
+                <label>
                   Created Date
                 </label>
                 <input
@@ -1676,24 +986,11 @@ export default function DashboardPage() {
                     ...editingTask,
                     createdAt: e.target.value ? new Date(e.target.value) : new Date()
                   })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
                 />
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '6px'
-                }}>
+              <div className="form-group">
+                <label>
                   Due Date
                 </label>
                 <input
@@ -1703,36 +1000,16 @@ export default function DashboardPage() {
                     ...editingTask,
                     dueDate: e.target.value ? new Date(e.target.value) : null
                   })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
                 />
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '6px'
-                }}>
+              <div className="form-group">
+                <label>
                   Priority
                 </label>
                 <select
                   value={editingTask.priority}
                   onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
                 >
                   {['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'].map(priority => (
                     <option key={priority} value={priority}>{priority}</option>
@@ -1740,26 +1017,13 @@ export default function DashboardPage() {
                 </select>
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '6px'
-                }}>
+              <div className="form-group">
+                <label>
                   Status
                 </label>
                 <select
                   value={editingTask.status}
                   onChange={(e) => setEditingTask({ ...editingTask, status: e.target.value as 'pending' | 'in-progress' | 'completed' })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
                 >
                   <option value="pending">Pending</option>
                   <option value="in-progress">In Progress</option>
@@ -1768,24 +1032,10 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div style={{
-              display: 'flex',
-              gap: '12px',
-              marginTop: '24px'
-            }}>
+            <div className="modal-actions">
               <button
                 onClick={handleSaveEdit}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#3B82F6',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  color: 'white',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
+                className="save-button"
               >
                 Update Task
               </button>
@@ -1794,17 +1044,7 @@ export default function DashboardPage() {
                   setShowEditModal(false);
                   setEditingTask(null);
                 }}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#6B7280',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  color: 'white',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
+                className="cancel-button"
               >
                 Cancel
               </button>

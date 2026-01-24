@@ -7,10 +7,22 @@ export default function HomePage() {
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   const handleGoogleLogin = () => {
     setShowGoogleModal(true);
-    
+
+    // For demo purposes, create a mock Google user
+    const googleUser = {
+      fullName: 'Google User',
+      email: 'google.user@example.com',
+      registeredAt: new Date().toISOString()
+    };
+
+    // Save to localStorage
+    localStorage.setItem('user', JSON.stringify(googleUser));
+    localStorage.setItem('isAuthenticated', 'true');
+
     setTimeout(() => {
       window.location.href = '/dashboard';
     }, 2000);
@@ -25,13 +37,11 @@ export default function HomePage() {
 
   const handleResetSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!resetEmail || !resetEmail.includes('@')) {
       setEmailError('Please enter a valid email address.');
       return;
     }
-    
-    console.log(`Reset email sent to: ${resetEmail}`);
     
     setTimeout(() => {
       setShowForgotPasswordModal(false);
@@ -42,34 +52,55 @@ export default function HomePage() {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setLoginError('');
+
     const form = e.target as HTMLFormElement;
-    const email = (form.querySelector('input[type="email"]') as HTMLInputElement)?.value;
-    const password = (form.querySelector('input[type="password"]') as HTMLInputElement)?.value;
+    const emailInput = form.querySelector('input[type="email"]') as HTMLInputElement;
+    const passwordInput = form.querySelector('input[type="password"]') as HTMLInputElement;
     
+    const email = emailInput?.value;
+    const password = passwordInput?.value;
+
     if (!email || !password) {
-      alert('Please fill in both email and password fields.');
+      setLoginError('Please fill in both email and password fields.');
       return;
     }
-    
-    if (email === 'test@example.com' && password === 'password123') {
-      alert('Login successful! Redirecting to dashboard...');
-      window.location.href = '/dashboard';
+
+    // Check if user exists in localStorage
+    const userStr = localStorage.getItem('user');
+
+    if (userStr) {
+      const user = JSON.parse(userStr);
+
+      // Simple verification
+      if (user.email === email && user.password === password) {
+        localStorage.setItem('isAuthenticated', 'true');
+        
+        // Show success message
+        alert('✅ Login successful! Redirecting to dashboard...');
+        
+        // Small delay for better UX
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 500);
+      } else {
+        setLoginError('❌ Invalid email or password. Please try again.');
+      }
     } else {
-      alert('Invalid credentials. Try: test@example.com / password123');
+      setLoginError('❌ No registered user found. Please sign up first.');
     }
   };
 
   return (
     <>
-      <div style={{ 
+      <div style={{
         minHeight: '100vh',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         backgroundColor: '#f3f4f6',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '80px'
+        padding: '20px'
       }}>
         <div style={{
           width: '100%',
@@ -94,8 +125,8 @@ export default function HomePage() {
               maxWidth: '420px'
             }}>
               <div style={{ textAlign: 'left', marginBottom: '40px' }}>
-                <h1 style={{ 
-                  fontSize: '32px', 
+                <h1 style={{
+                  fontSize: '32px',
                   color: '#111827',
                   marginBottom: '12px',
                   fontWeight: '700',
@@ -103,8 +134,8 @@ export default function HomePage() {
                 }}>
                   Welcome Back!
                 </h1>
-                <p style={{ 
-                  fontSize: '16px', 
+                <p style={{
+                  fontSize: '16px',
                   color: '#6b7280',
                   lineHeight: '1.5'
                 }}>
@@ -112,11 +143,30 @@ export default function HomePage() {
                 </p>
               </div>
               
+              {/* Login Error Message */}
+              {loginError && (
+                <div style={{
+                  backgroundColor: loginError.includes('✅') ? '#d1fae5' : '#fef2f2',
+                  border: `1px solid ${loginError.includes('✅') ? '#a7f3d0' : '#fecaca'}`,
+                  color: loginError.includes('✅') ? '#065f46' : '#dc2626',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  marginBottom: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span>{loginError.includes('✅') ? '✓' : '✗'}</span>
+                  <span>{loginError.replace('✅ ', '').replace('❌ ', '')}</span>
+                </div>
+              )}
+
               <form onSubmit={handleFormSubmit}>
                 <div style={{ marginBottom: '24px' }}>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '8px', 
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '8px',
                     fontWeight: '500',
                     color: '#374151',
                     fontSize: '14px'
@@ -125,7 +175,8 @@ export default function HomePage() {
                   </label>
                   <input
                     type="email"
-                    placeholder="Enter the email"
+                    name="email"
+                    placeholder="Enter your email"
                     required
                     style={{
                       width: '100%',
@@ -148,11 +199,11 @@ export default function HomePage() {
                     }}
                   />
                 </div>
-                
+
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '8px', 
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '8px',
                     fontWeight: '500',
                     color: '#374151',
                     fontSize: '14px'
@@ -161,7 +212,8 @@ export default function HomePage() {
                   </label>
                   <input
                     type="password"
-                    placeholder="Enter the Password"
+                    name="password"
+                    placeholder="Enter your password"
                     required
                     style={{
                       width: '100%',
@@ -184,17 +236,17 @@ export default function HomePage() {
                     }}
                   />
                 </div>
-                
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'flex-end', 
-                  marginBottom: '28px' 
+
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  marginBottom: '28px'
                 }}>
-                  <a 
+                  <a
                     href="#"
                     onClick={openForgotPasswordModal}
-                    style={{ 
-                      color: '#4f46e5', 
+                    style={{
+                      color: '#4f46e5',
                       textDecoration: 'none',
                       fontSize: '14px',
                       fontWeight: '500'
@@ -205,7 +257,7 @@ export default function HomePage() {
                     Forgot password?
                   </a>
                 </div>
-                
+
                 <button
                   type="submit"
                   style={{
@@ -227,16 +279,16 @@ export default function HomePage() {
                   Sign in
                 </button>
               </form>
-              
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                marginBottom: '28px' 
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '28px'
               }}>
                 <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
-                <span style={{ 
-                  padding: '0 16px', 
-                  color: '#6b7280', 
+                <span style={{
+                  padding: '0 16px',
+                  color: '#6b7280',
                   fontSize: '14px',
                   fontWeight: '500'
                 }}>
@@ -244,7 +296,7 @@ export default function HomePage() {
                 </span>
                 <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
               </div>
-              
+
               <button
                 onClick={handleGoogleLogin}
                 style={{
@@ -274,24 +326,24 @@ export default function HomePage() {
                 }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                 </svg>
                 Log in with Google
               </button>
-              
+
               <div style={{ textAlign: 'center' }}>
-                <p style={{ 
-                  color: '#6b7280', 
+                <p style={{
+                  color: '#6b7280',
                   fontSize: '15px'
                 }}>
                   Don't have an account?{' '}
-                  <a 
+                  <a
                     href="/register"
-                    style={{ 
-                      color: '#4f46e5', 
+                    style={{
+                      color: '#4f46e5',
                       textDecoration: 'none',
                       fontWeight: '600'
                     }}
@@ -327,23 +379,27 @@ export default function HomePage() {
                 left: 0,
                 background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.03) 0%, rgba(124, 58, 237, 0.03) 100%)'
               }}></div>
-              
-              <img 
-                src="/time.jpg" 
+
+              <img
+                src="/time.jpg"
                 alt="Task Management"
                 style={{
                   width: '90%',
                   height: '95%',
                   borderRadius: '10px',
+                  objectFit: 'cover',
                   objectPosition: 'center',
-                  zIndex: 1,
-                  position: 'relative'
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 1
                 }}
                 onError={(e) => {
                   e.currentTarget.src = '';
                 }}
               />
-              
+
               <div style={{
                 position: 'absolute',
                 bottom: '40px',
@@ -362,7 +418,7 @@ export default function HomePage() {
                   margin: 0,
                   fontWeight: '500'
                 }}>
-                  Manage your task in a easy and more efficient way
+                  Manage your tasks in an easy and efficient way
                 </p>
               </div>
             </div>
@@ -370,6 +426,7 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Rest of the modals remain the same */}
       {showForgotPasswordModal && (
         <div style={{
           position: 'fixed',
@@ -457,8 +514,8 @@ export default function HomePage() {
                 )}
               </div>
 
-              <div style={{ 
-                display: 'flex', 
+              <div style={{
+                display: 'flex',
                 gap: '12px',
                 marginTop: '30px'
               }}>
@@ -566,10 +623,10 @@ export default function HomePage() {
               border: '2px solid #e5e7eb'
             }}>
               <svg width="30" height="30" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
               </svg>
             </div>
 

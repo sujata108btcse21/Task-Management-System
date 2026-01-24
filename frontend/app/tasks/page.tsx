@@ -12,22 +12,22 @@ export default function TasksPage() {
     department: 'Management',
     task: '',
     priority: 'P1',
-    status: 'pending' as 'pending' | 'in-progress' | 'completed'
+    status: 'pending' as 'pending' | 'in-progress' | 'completed',
+    dueDate: '',
   });
 
-  // Load tasks on component mount
   useEffect(() => {
     setTasks(getAllTasks());
   }, []);
 
   const departments = [
-    'Management', 'Sales', 'Operations', 'Marketing', 
+    'Management', 'Sales', 'Operations', 'Marketing',
     'Human Resources', 'Finance', 'Customer Service'
   ];
 
   const priorities = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'];
 
-  const filteredTasks = tasks.filter(task => 
+  const filteredTasks = tasks.filter(task =>
     task.task.toLowerCase().includes(searchQuery.toLowerCase()) ||
     task.department.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -35,22 +35,25 @@ export default function TasksPage() {
   const handleAddTask = () => {
     if (newTask.task.trim()) {
       if (editingIndex !== null) {
-        // Update existing task
-        updateTask(editingIndex, newTask);
+        updateTask(editingIndex, {
+          ...newTask,
+          dueDate: newTask.dueDate ? new Date(newTask.dueDate) : null
+        });
       } else {
-        // Add new task
-        addTask(newTask);
+        addTask({
+          ...newTask,
+          dueDate: newTask.dueDate ? new Date(newTask.dueDate) : null
+        });
       }
-      
-      // Refresh tasks from shared storage
+
       setTasks(getAllTasks());
-      
-      // Reset form
-      setNewTask({ 
-        department: 'Management', 
-        task: '', 
+
+      setNewTask({
+        department: 'Management',
+        task: '',
         priority: 'P1',
-        status: 'pending'
+        status: 'pending',
+        dueDate: ''
       });
       setShowAddTask(false);
       setEditingIndex(null);
@@ -60,7 +63,13 @@ export default function TasksPage() {
   const handleEditTask = (id: number) => {
     const task = tasks.find(t => t.id === id);
     if (task) {
-      setNewTask(task);
+      setNewTask({
+        department: task.department,
+        task: task.task,
+        priority: task.priority,
+        status: task.status,
+        dueDate: task.dueDate ? task.dueDate.toISOString().split('T')[0] : ''
+      });
       setEditingIndex(task.id);
       setShowAddTask(true);
     }
@@ -107,36 +116,34 @@ export default function TasksPage() {
 
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: '32px'
       }}>
         <div>
-          <h1 style={{ 
-            fontSize: '30px', 
+          <h1 style={{
+            fontSize: '30px',
             fontWeight: '700',
             color: '#111827',
             marginBottom: '4px'
           }}>
             All Tasks
           </h1>
-          <p style={{ 
-            fontSize: '14px', 
+          <p style={{
+            fontSize: '14px',
             color: '#6B7280'
           }}>
             Manage your tasks efficiently
           </p>
         </div>
-        
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
           gap: '12px'
         }}>
-          {/* Search Bar */}
           <div style={{ position: 'relative' }}>
             <input
               type="text"
@@ -169,8 +176,8 @@ export default function TasksPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
           </div>
-          
-          <button 
+
+          <button
             onClick={() => setShowAddTask(true)}
             style={{
               padding: '10px 20px',
@@ -187,10 +194,10 @@ export default function TasksPage() {
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 4V20M20 12H4" 
-                stroke="white" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
+              <path d="M12 4V20M20 12H4"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </svg>
@@ -199,14 +206,13 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(4, 1fr)', 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
         gap: '20px',
         marginBottom: '32px'
       }}>
-        <div style={{ 
+        <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
           padding: '20px',
@@ -228,17 +234,17 @@ export default function TasksPage() {
               justifyContent: 'center'
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5M12 12H15M12 16H15M9 12H9.01M9 16H9.01" 
-                  stroke="#3B82F6" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5M12 12H15M12 16H15M9 12H9.01M9 16H9.01"
+                  stroke="#3B82F6"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                 />
               </svg>
             </div>
           </div>
         </div>
 
-        <div style={{ 
+        <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
           padding: '20px',
@@ -262,10 +268,10 @@ export default function TasksPage() {
               justifyContent: 'center'
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
-                  stroke="#10B981" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                  stroke="#10B981"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
@@ -273,7 +279,7 @@ export default function TasksPage() {
           </div>
         </div>
 
-        <div style={{ 
+        <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
           padding: '20px',
@@ -297,10 +303,10 @@ export default function TasksPage() {
               justifyContent: 'center'
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 8V12L14 14M12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4Z" 
-                  stroke="#F59E0B" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <path d="M12 8V12L14 14M12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4Z"
+                  stroke="#F59E0B"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
@@ -308,7 +314,7 @@ export default function TasksPage() {
           </div>
         </div>
 
-        <div style={{ 
+        <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
           padding: '20px',
@@ -332,10 +338,10 @@ export default function TasksPage() {
               justifyContent: 'center'
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 8V12L15 15M12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4Z" 
-                  stroke="#EF4444" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <path d="M12 8V12L15 15M12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4Z"
+                  stroke="#EF4444"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
@@ -344,24 +350,22 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Tasks Table */}
-      <div style={{ 
+      <div style={{
         backgroundColor: 'white',
         borderRadius: '12px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
         border: '1px solid #E5E7EB',
         overflow: 'hidden'
       }}>
-        {/* Table Header */}
-        <div style={{ 
-          display: 'grid', 
+        <div style={{
+          display: 'grid',
           gridTemplateColumns: '1fr 2fr 1fr 120px',
           padding: '16px 20px',
           backgroundColor: '#F9FAFB',
           borderBottom: '1px solid #E5E7EB'
         }}>
-          <div style={{ 
-            fontSize: '12px', 
+          <div style={{
+            fontSize: '12px',
             fontWeight: '600',
             color: '#6B7280',
             textTransform: 'uppercase',
@@ -369,8 +373,8 @@ export default function TasksPage() {
           }}>
             Department
           </div>
-          <div style={{ 
-            fontSize: '12px', 
+          <div style={{
+            fontSize: '12px',
             fontWeight: '600',
             color: '#6B7280',
             textTransform: 'uppercase',
@@ -378,8 +382,8 @@ export default function TasksPage() {
           }}>
             Task
           </div>
-          <div style={{ 
-            fontSize: '12px', 
+          <div style={{
+            fontSize: '12px',
             fontWeight: '600',
             color: '#6B7280',
             textTransform: 'uppercase',
@@ -387,8 +391,8 @@ export default function TasksPage() {
           }}>
             Priority
           </div>
-          <div style={{ 
-            fontSize: '12px', 
+          <div style={{
+            fontSize: '12px',
             fontWeight: '600',
             color: '#6B7280',
             textTransform: 'uppercase',
@@ -398,12 +402,11 @@ export default function TasksPage() {
           </div>
         </div>
 
-        {/* Tasks List */}
         {filteredTasks.map((task, index) => (
-          <div 
-            key={task.id} 
-            style={{ 
-              display: 'grid', 
+          <div
+            key={task.id}
+            style={{
+              display: 'grid',
               gridTemplateColumns: '1fr 2fr 1fr 120px',
               padding: '16px 20px',
               borderBottom: index !== filteredTasks.length - 1 ? '1px solid #E5E7EB' : 'none',
@@ -411,7 +414,6 @@ export default function TasksPage() {
               backgroundColor: task.status === 'completed' ? '#F9FAFB' : 'white'
             }}
           >
-            {/* Department */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
                 width: '8px',
@@ -419,8 +421,8 @@ export default function TasksPage() {
                 borderRadius: '50%',
                 backgroundColor: getDepartmentColor(task.department)
               }}></div>
-              <span style={{ 
-                fontSize: '14px', 
+              <span style={{
+                fontSize: '14px',
                 fontWeight: '600',
                 color: '#111827'
               }}>
@@ -428,9 +430,8 @@ export default function TasksPage() {
               </span>
             </div>
 
-            {/* Task */}
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               alignItems: 'center',
               gap: '12px'
             }}>
@@ -451,17 +452,17 @@ export default function TasksPage() {
               >
                 {task.status === 'completed' && (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 13L9 17L19 7" 
-                      stroke="white" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
+                    <path d="M5 13L9 17L19 7"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                   </svg>
                 )}
               </button>
-              <span style={{ 
-                fontSize: '14px', 
+              <span style={{
+                fontSize: '14px',
                 color: task.status === 'completed' ? '#9CA3AF' : '#374151',
                 textDecoration: task.status === 'completed' ? 'line-through' : 'none'
               }}>
@@ -469,19 +470,17 @@ export default function TasksPage() {
               </span>
             </div>
 
-            {/* Priority */}
-            <div style={{ 
-              fontSize: '14px', 
+            <div style={{
+              fontSize: '14px',
               fontWeight: '600',
               color: getPriorityColor(task.priority),
-              textAlign: 'center'
+              textAlign: 'start'
             }}>
               {task.priority}
             </div>
 
-            {/* Actions */}
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               gap: '8px',
               justifyContent: 'flex-end'
             }}>
@@ -519,10 +518,9 @@ export default function TasksPage() {
           </div>
         ))}
 
-        {/* Empty State */}
         {filteredTasks.length === 0 && (
-          <div style={{ 
-            padding: '40px 20px', 
+          <div style={{
+            padding: '40px 20px',
             textAlign: 'center',
             color: '#6B7280'
           }}>
@@ -531,7 +529,6 @@ export default function TasksPage() {
         )}
       </div>
 
-      {/* Add/Edit Task Modal */}
       {showAddTask && (
         <div style={{
           position: 'fixed',
@@ -554,14 +551,14 @@ export default function TasksPage() {
             maxWidth: '500px',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
           }}>
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               marginBottom: '24px'
             }}>
-              <h2 style={{ 
-                fontSize: '20px', 
+              <h2 style={{
+                fontSize: '20px',
                 fontWeight: '600',
                 color: '#111827'
               }}>
@@ -571,11 +568,12 @@ export default function TasksPage() {
                 onClick={() => {
                   setShowAddTask(false);
                   setEditingIndex(null);
-                  setNewTask({ 
-                    department: 'Management', 
-                    task: '', 
+                  setNewTask({
+                    department: 'Management',
+                    task: '',
                     priority: 'P1',
-                    status: 'pending'
+                    status: 'pending',
+                    dueDate: ''
                   });
                 }}
                 style={{
@@ -599,8 +597,8 @@ export default function TasksPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ 
-                  display: 'block', 
+                <label style={{
+                  display: 'block',
                   fontSize: '14px',
                   fontWeight: '500',
                   color: '#374151',
@@ -610,7 +608,7 @@ export default function TasksPage() {
                 </label>
                 <select
                   value={newTask.department}
-                  onChange={(e) => setNewTask({...newTask, department: e.target.value})}
+                  onChange={(e) => setNewTask({ ...newTask, department: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '10px',
@@ -626,8 +624,8 @@ export default function TasksPage() {
               </div>
 
               <div>
-                <label style={{ 
-                  display: 'block', 
+                <label style={{
+                  display: 'block',
                   fontSize: '14px',
                   fontWeight: '500',
                   color: '#374151',
@@ -637,7 +635,7 @@ export default function TasksPage() {
                 </label>
                 <textarea
                   value={newTask.task}
-                  onChange={(e) => setNewTask({...newTask, task: e.target.value})}
+                  onChange={(e) => setNewTask({ ...newTask, task: e.target.value })}
                   placeholder="Enter task description..."
                   rows={3}
                   style={{
@@ -652,8 +650,32 @@ export default function TasksPage() {
               </div>
 
               <div>
-                <label style={{ 
-                  display: 'block', 
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '6px'
+                }}>
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  value={newTask.dueDate}
+                  onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '6px',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
                   fontSize: '14px',
                   fontWeight: '500',
                   color: '#374151',
@@ -663,7 +685,7 @@ export default function TasksPage() {
                 </label>
                 <select
                   value={newTask.priority}
-                  onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
+                  onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '10px',
@@ -679,8 +701,8 @@ export default function TasksPage() {
               </div>
 
               <div>
-                <label style={{ 
-                  display: 'block', 
+                <label style={{
+                  display: 'block',
                   fontSize: '14px',
                   fontWeight: '500',
                   color: '#374151',
@@ -690,7 +712,7 @@ export default function TasksPage() {
                 </label>
                 <select
                   value={newTask.status}
-                  onChange={(e) => setNewTask({...newTask, status: e.target.value as 'pending' | 'in-progress' | 'completed'})}
+                  onChange={(e) => setNewTask({ ...newTask, status: e.target.value as 'pending' | 'in-progress' | 'completed' })}
                   style={{
                     width: '100%',
                     padding: '10px',
@@ -706,8 +728,8 @@ export default function TasksPage() {
               </div>
             </div>
 
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               gap: '12px',
               marginTop: '24px'
             }}>
@@ -731,11 +753,12 @@ export default function TasksPage() {
                 onClick={() => {
                   setShowAddTask(false);
                   setEditingIndex(null);
-                  setNewTask({ 
-                    department: 'Management', 
-                    task: '', 
+                  setNewTask({
+                    department: 'Management',
+                    task: '',
                     priority: 'P1',
-                    status: 'pending'
+                    status: 'pending',
+                    dueDate: ''
                   });
                 }}
                 style={{

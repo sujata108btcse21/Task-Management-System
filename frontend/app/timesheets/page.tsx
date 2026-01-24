@@ -1,144 +1,183 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { 
+  getAllMeetings, 
+  addMeeting, 
+  saveMeetings,
+  calculateDuration,
+  type Meeting 
+} from '../../lib/meetings';
+
+// Remove the TimeSlot interface or define it properly
+interface TimeSlot {
+  hour: string;
+  time: string;
+  meridiem: string;
+}
 
 export default function TimesheetsPage() {
-  const [selectedTask, setSelectedTask] = useState<number | null>(null);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAddMeeting, setShowAddMeeting] = useState(false);
 
-  // Data structure matching the new screenshot format
-  const tasks = [
-    {
-      id: 1,
-      title: 'Study Case',
-      times: {
-        'Mon, 15 Sep': '8:00',
-        'Tue, 16 Sep': '4:00',
-        'Wed, 17 Sep': '2:30',
-        'Thu, 18 Sep': '0:30',
-        'Fri, 19 Sep': '6:00',
-        'Sat, 20 Sep': '1:00',
-        'Sun, 21 Sep': '0:00',
-        'Total': '22:00'
-      }
-    },
-    {
-      id: 2,
-      title: 'Socials Sept',
-      times: {
-        'Mon, 15 Sep': '2:00',
-        'Tue, 16 Sep': '3:00',
-        'Wed, 17 Sep': '1:30',
-        'Thu, 18 Sep': '2:00',
-        'Fri, 19 Sep': '1:00',
-        'Sat, 20 Sep': '0:30',
-        'Sun, 21 Sep': '0:00',
-        'Total': '10:00'
-      }
-    },
-    {
-      id: 3,
-      title: 'Black Box Testing',
-      times: {
-        'Mon, 15 Sep': '1:00',
-        'Tue, 16 Sep': '2:00',
-        'Wed, 17 Sep': '3:00',
-        'Thu, 18 Sep': '1:30',
-        'Fri, 19 Sep': '0:30',
-        'Sat, 20 Sep': '0:00',
-        'Sun, 21 Sep': '0:00',
-        'Total': '8:00'
-      }
-    },
-    {
-      id: 4,
-      title: 'Content Writing',
-      times: {
-        'Mon, 15 Sep': '0:30',
-        'Tue, 16 Sep': '1:00',
-        'Wed, 17 Sep': '0:30',
-        'Thu, 18 Sep': '2:00',
-        'Fri, 19 Sep': '1:00',
-        'Sat, 20 Sep': '0:30',
-        'Sun, 21 Sep': '0:00',
-        'Total': '5:30'
-      }
-    },
-    {
-      id: 5,
-      title: 'Targeted advertising',
-      times: {
-        'Mon, 15 Sep': '3:00',
-        'Tue, 16 Sep': '2:00',
-        'Wed, 17 Sep': '1:00',
-        'Thu, 18 Sep': '3:00',
-        'Fri, 19 Sep': '2:00',
-        'Sat, 20 Sep': '1:00',
-        'Sun, 21 Sep': '0:00',
-        'Total': '12:00'
-      }
-    },
-    {
-      id: 6,
-      title: 'Presentation "Employees ..."',
-      times: {
-        'Mon, 15 Sep': '1:00',
-        'Tue, 16 Sep': '1:30',
-        'Wed, 17 Sep': '2:00',
-        'Thu, 18 Sep': '1:00',
-        'Fri, 19 Sep': '0:30',
-        'Sat, 20 Sep': '0:00',
-        'Sun, 21 Sep': '0:00',
-        'Total': '6:00'
-      }
+  const [newMeeting, setNewMeeting] = useState({
+    title: '',
+    date: new Date().toISOString().split('T')[0],
+    startTime: '09:00',
+    endTime: '10:00',
+    participants: '',
+    type: 'Standup',
+    status: 'scheduled' as 'scheduled' | 'completed' | 'cancelled'
+  });
+
+  // Load meetings on component mount
+  useEffect(() => {
+    const loadedMeetings = getAllMeetings();
+    setMeetings(loadedMeetings);
+  }, []);
+
+  const timeSlots: TimeSlot[] = [];
+  for (let hour = 6; hour <= 22; hour++) {
+    const displayHour = hour > 12 ? hour - 12 : hour;
+    const meridiem = hour >= 12 ? 'PM' : 'AM';
+    const hourStr = hour.toString().padStart(2, '0');
+
+    timeSlots.push({
+      hour: `${hourStr}:00`,
+      time: `${displayHour}:00`,
+      meridiem
+    });
+
+    if (hour < 22) {
+      timeSlots.push({
+        hour: `${hourStr}:30`,
+        time: `${displayHour}:30`,
+        meridiem
+      });
     }
+  }
+
+  const meetingTypes = [
+    'Standup',
+    'Team Meeting',
+    'Client Meeting',
+    'Review',
+    'Planning',
+    'Retrospective',
+    'Workshop',
+    'One-on-One',
+    'Board Meeting',
+    'All-Hands',
+    'Demo',
+    'Presentation'
   ];
 
-  const columns = [
-    'Tasks',
-    'Mon, 15 Sep',
-    'Tue, 16 Sep',
-    'Wed, 17 Sep',
-    'Thu, 18 Sep',
-    'Fri, 19 Sep',
-    'Sat, 20 Sep',
-    'Sun, 21 Sep',
-    'Total'
-  ];
+  const handleAddMeeting = () => {
+    if (newMeeting.title.trim() && newMeeting.date) {
+      const duration = calculateDuration(newMeeting.startTime, newMeeting.endTime);
+      const participantsList = newMeeting.participants
+        .split(',')
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
 
-  const handleTaskClick = (taskId: number) => {
-    setSelectedTask(taskId);
+      const meeting: Omit<Meeting, 'id'> = {
+        title: newMeeting.title,
+        date: new Date(newMeeting.date),
+        startTime: newMeeting.startTime,
+        endTime: newMeeting.endTime,
+        duration: duration,
+        participants: participantsList.length > 0 ? participantsList : ['Team'],
+        type: newMeeting.type,
+        status: newMeeting.status
+      };
+
+      // Add meeting to storage and get the created meeting with ID
+      const createdMeeting = addMeeting(meeting);
+      
+      // Update local state
+      setMeetings(prev => [...prev, createdMeeting]);
+
+      // Reset form
+      setNewMeeting({
+        title: '',
+        date: new Date().toISOString().split('T')[0],
+        startTime: '09:00',
+        endTime: '10:00',
+        participants: '',
+        type: 'Standup',
+        status: 'scheduled'
+      });
+
+      setShowAddMeeting(false);
+    }
   };
 
-  const filteredTasks = tasks.filter(task => 
-    task.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (time: string): string => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const meridiem = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${meridiem}`;
+  };
+
+  const getMeetingIcon = (type: string) => {
+    switch (type) {
+      case 'Standup': return '👨‍💼';
+      case 'Team Meeting': return '👥';
+      case 'Client Meeting': return '🤝';
+      case 'Review': return '📋';
+      case 'Planning': return '📅';
+      case 'Retrospective': return '🔄';
+      case 'Workshop': return '🔧';
+      case 'One-on-One': return '👤';
+      case 'Board Meeting': return '👔';
+      case 'All-Hands': return '👨‍👩‍👧‍👦';
+      case 'Demo': return '🎬';
+      case 'Presentation': return '📽️';
+      default: return '📅';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'scheduled': return '#3B82F6';
+      case 'completed': return '#10B981';
+      case 'cancelled': return '#EF4444';
+      default: return '#6B7280';
+    }
+  };
+
+  const filteredMeetings = meetings.filter(meeting =>
+    meeting.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    meeting.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    meeting.participants.some(p => p.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const calculateColumnTotals = () => {
-    const totals: {[key: string]: string} = {};
-    
-    columns.forEach(column => {
-      if (column === 'Tasks') return;
-      
-      const times = tasks.map(task => task.times[column]);
-      let totalMinutes = 0;
-      
-      times.forEach(time => {
-        if (time) {
-          const [hours, minutes] = time.split(':').map(Number);
-          totalMinutes += hours * 60 + (minutes || 0);
-        }
-      });
-      
-      const totalHours = Math.floor(totalMinutes / 60);
-      const remainingMinutes = totalMinutes % 60;
-      totals[column] = `${totalHours}:${remainingMinutes.toString().padStart(2, '0')}`;
-    });
-    
-    return totals;
-  };
+  const upcomingMeetings = meetings
+    .filter(meeting => {
+      const meetingDate = new Date(meeting.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const nextWeek = new Date(today);
+      nextWeek.setDate(today.getDate() + 7);
+      return meetingDate >= today && meetingDate <= nextWeek && meeting.status === 'scheduled';
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const columnTotals = calculateColumnTotals();
+  const totalMeetingHours = meetings.reduce((total, meeting) => {
+    const [hours, minutes] = meeting.duration.split(':').map(Number);
+    return total + hours + (minutes / 60);
+  }, 0);
+
+  // ... rest of your component remains the same ...
 
   return (
     <div style={{
@@ -146,260 +185,456 @@ export default function TimesheetsPage() {
       maxWidth: '1400px',
       margin: '0 auto',
       padding: '20px',
-      backgroundColor: '#f8f9fa',
       minHeight: '100vh'
     }}>
-        <div style={{
+      <div style={{
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingBottom: '20px',
-      }}>
-        <div style={{ 
-          flex: 1,
-          maxWidth: '300px'
-        }}>
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 16px',
-              border: '1px solid #e0e0e0',
-              borderRadius: '6px',
-              fontSize: '14px',
-              backgroundColor: 'white',
-              transition: 'all 0.2s ease',
-              outline: 'none'
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#3b82f6';
-              e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e0e0e0';
-              e.target.style.boxShadow = 'none';
-            }}
-          />
-        </div>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '12px'
-        }}>
-          <button style={{
-            padding: '8px 16px',
-            backgroundColor: 'white',
-            border: '1px solid #E5E7EB',
-            borderRadius: '8px',
-            fontSize: '14px',
-            color: '#374151',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 8V16M8 12H16M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
-                stroke="#4B5563" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              />
-            </svg>
-            Add Task
-          </button>
-        </div>
-      </div>
-        
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: '30px',
         paddingBottom: '15px',
         borderBottom: '1px solid #e0e0e0'
       }}>
-        <h1 style={{ 
-          fontSize: '24px', 
-          fontWeight: '600',
-          color: '#1a1a1a',
-          margin: 0
-        }}>
-          Timesheets
-        </h1>
-
-        {/* View Mode Toggle */}
-        <div style={{
-          display: 'flex',
-          gap: '8px',
-          backgroundColor: '#fff',
-          border: '1px solid #e0e0e0',
-          borderRadius: '6px',
-          padding: '4px'
-        }}>
-          <button
-            style={{
-              padding: '6px 16px',
-              border: 'none',
-              background: '#3b82f6',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: 'white',
-              cursor: 'default'
-            }}
-          >
-            List
-          </button>
-          <button
-            disabled
-            style={{
-              padding: '6px 16px',
-              border: 'none',
-              background: 'none',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#999',
-              cursor: 'not-allowed',
-              opacity: 0.7
-            }}
-          >
-            Grid
-          </button>
+        <div>
+          <h1 style={{
+            fontSize: '24px',
+            fontWeight: '600',
+            color: '#1a1a1a',
+            margin: 0,
+            marginBottom: '8px'
+          }}>
+            Meeting Schedule
+          </h1>
+          <p style={{
+            fontSize: '14px',
+            color: '#666',
+            margin: 0
+          }}>
+            Total: {meetings.length} meetings • {totalMeetingHours.toFixed(1)} hours
+          </p>
         </div>
+
+        <button
+          onClick={() => setShowAddMeeting(true)}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#3B82F6',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            color: 'white',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#2563EB';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#3B82F6';
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 4V20M20 12H4"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Add Meeting
+        </button>
       </div>
 
-      {/* Timesheet Table */}
       <div style={{
-        backgroundColor: 'white',
-        border: '1px solid #e0e0e0',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-        marginBottom: '30px'
+        marginBottom: '20px'
       }}>
-        {/* Table Header */}
+        <input
+          type="text"
+          placeholder="Search meetings by title, type, or participants..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{
+            width: '50%',
+            padding: '12px 16px',
+            border: '1px solid #e0e0e0',
+            borderRadius: '8px',
+            fontSize: '14px',
+            backgroundColor: 'white',
+            transition: 'all 0.2s ease',
+            outline: 'none'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = '#3b82f6';
+            e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = '#e0e0e0';
+            e.target.style.boxShadow = 'none';
+          }}
+        />
+      </div>
+
+      {upcomingMeetings.length > 0 && (
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columns.length}, minmax(120px, 1fr))`,
-          backgroundColor: '#f8f9fa',
-          borderBottom: '1px solid #e0e0e0',
-          padding: '16px 20px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          padding: '20px',
+          marginBottom: '20px',
+          border: '1px solid #e0e0e0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
         }}>
-          {columns.map((column, index) => (
-            <div key={index} style={{
-              fontWeight: '600',
-              fontSize: '14px',
-              color: '#333',
-              textAlign: index === 0 ? 'left' : 'center',
-              padding: '0 10px'
-            }}>
-              {column}
-            </div>
-          ))}
-        </div>
+          <h2 style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#1a1a1a',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span>📅</span>
+            Upcoming Meetings ({upcomingMeetings.length})
+          </h2>
 
-        {/* Table Rows */}
-        <div>
-          {filteredTasks.map((task) => (
-            <div 
-              key={task.id}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: `repeat(${columns.length}, minmax(120px, 1fr))`,
-                padding: '16px 20px',
-                borderBottom: '1px solid #f0f0f0',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-              onClick={() => handleTaskClick(task.id)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f8f9fa';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              {/* Task Name */}
-              <div style={{
-                fontSize: '14px',
-                color: '#333',
-                fontWeight: '500',
-                padding: '0 10px',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                {task.title}
-              </div>
-
-              {/* Time Entries for Each Day */}
-              {columns.slice(1).map((column, index) => (
-                <div 
-                  key={index}
-                  style={{
-                    fontSize: '14px',
-                    color: '#333',
-                    textAlign: 'center',
-                    padding: '0 10px',
-                    fontWeight: '500',
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: '16px'
+          }}>
+            {upcomingMeetings.slice(0, 4).map(meeting => (
+              <div
+                key={meeting.id}
+                style={{
+                  backgroundColor: '#F8FAFC',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  border: '1px solid #E2E8F0',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    backgroundColor: '#DBEAFE',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    flexShrink: 0
+                  }}>
+                    {getMeetingIcon(meeting.type)}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      color: '#1a1a1a',
+                      marginBottom: '4px'
+                    }}>
+                      {meeting.title}
+                    </h3>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '8px'
+                    }}>
+                      <span style={{
+                        fontSize: '12px',
+                        padding: '2px 8px',
+                        backgroundColor: '#DBEAFE',
+                        color: '#1D4ED8',
+                        borderRadius: '12px',
+                        fontWeight: '500'
+                      }}>
+                        {meeting.type}
+                      </span>
+                      <span style={{
+                        fontSize: '12px',
+                        padding: '2px 8px',
+                        backgroundColor: getStatusColor(meeting.status) + '20',
+                        color: getStatusColor(meeting.status),
+                        borderRadius: '12px',
+                        fontWeight: '500',
+                        textTransform: 'capitalize'
+                      }}>
+                        {meeting.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  fontSize: '14px',
+                  color: '#666'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>📅</span>
+                    <span>{formatDate(meeting.date)}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>⏰</span>
+                    <span>{formatTime(meeting.startTime)} - {formatTime(meeting.endTime)}</span>
+                  </div>
+                </div>
+
+                {meeting.participants.length > 0 && (
+                  <div style={{
+                    marginTop: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '13px',
+                    color: '#666'
+                  }}>
+                    <span>👥</span>
+                    <span>{meeting.participants.slice(0, 3).join(', ')}</span>
+                    {meeting.participants.length > 3 && (
+                      <span style={{ color: '#999' }}>
+                        +{meeting.participants.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        padding: '20px',
+        marginTop: '20px',
+        border: '1px solid #e0e0e0',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+      }}>
+        <h2 style={{
+          fontSize: '18px',
+          fontWeight: '600',
+          color: '#1a1a1a',
+          marginBottom: '20px'
+        }}>
+          All Meetings ({filteredMeetings.length})
+        </h2>
+
+        <div style={{
+          overflowX: 'auto'
+        }}>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse'
+          }}>
+            <thead>
+              <tr style={{
+                backgroundColor: '#F8FAFC',
+                borderBottom: '1px solid #E2E8F0'
+              }}>
+                <th style={{
+                  padding: '12px',
+                  textAlign: 'left',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: '#64748B',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Meeting
+                </th>
+                <th style={{
+                  padding: '12px',
+                  textAlign: 'left',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: '#64748B',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Date & Time
+                </th>
+                <th style={{
+                  padding: '12px',
+                  textAlign: 'left',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: '#64748B',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Duration
+                </th>
+                <th style={{
+                  padding: '12px',
+                  textAlign: 'left',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: '#64748B',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Type
+                </th>
+                <th style={{
+                  padding: '12px',
+                  textAlign: 'left',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: '#64748B',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Participants
+                </th>
+                <th style={{
+                  padding: '12px',
+                  textAlign: 'left',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: '#64748B',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMeetings.map(meeting => (
+                <tr
+                  key={meeting.id}
+                  style={{
+                    borderBottom: '1px solid #f0f0f0',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#F8FAFC';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
                   }}
                 >
-                  {task.times[column] || '0:00'}
-                </div>
+                  <td style={{ padding: '12px' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}>
+                      <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '6px',
+                        backgroundColor: '#DBEAFE',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '16px',
+                        flexShrink: 0
+                      }}>
+                        {getMeetingIcon(meeting.type)}
+                      </div>
+                      <div>
+                        <div style={{
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: '#1a1a1a',
+                          marginBottom: '2px'
+                        }}>
+                          {meeting.title}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <div style={{
+                      fontSize: '14px',
+                      color: '#1a1a1a'
+                    }}>
+                      {formatDate(meeting.date)}
+                    </div>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#666'
+                    }}>
+                      {formatTime(meeting.startTime)} - {formatTime(meeting.endTime)}
+                    </div>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#1a1a1a'
+                    }}>
+                      {meeting.duration}
+                    </div>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <span style={{
+                      fontSize: '12px',
+                      padding: '4px 10px',
+                      backgroundColor: '#DBEAFE',
+                      color: '#1D4ED8',
+                      borderRadius: '12px',
+                      fontWeight: '500'
+                    }}>
+                      {meeting.type}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <div style={{
+                      fontSize: '13px',
+                      color: '#666',
+                      maxWidth: '200px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      {meeting.participants.join(', ')}
+                    </div>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <span style={{
+                      fontSize: '12px',
+                      padding: '4px 10px',
+                      backgroundColor: getStatusColor(meeting.status) + '20',
+                      color: getStatusColor(meeting.status),
+                      borderRadius: '12px',
+                      fontWeight: '500',
+                      textTransform: 'capitalize'
+                    }}>
+                      {meeting.status}
+                    </span>
+                  </td>
+                </tr>
               ))}
-            </div>
-          ))}
-        </div>
-
-        {/* Total Row */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columns.length}, minmax(120px, 1fr))`,
-          backgroundColor: '#f8f9fa',
-          borderTop: '2px solid #e0e0e0',
-          padding: '16px 20px',
-          fontWeight: '600'
-        }}>
-          <div style={{
-            fontSize: '14px',
-            color: '#333',
-            padding: '0 10px'
-          }}>
-            Total
-          </div>
-          
-          {columns.slice(1).map((column, index) => (
-            <div 
-              key={index}
-              style={{
-                fontSize: '14px',
-                color: '#333',
-                textAlign: 'center',
-                padding: '0 10px'
-              }}
-            >
-              {columnTotals[column] || '0:00'}
-            </div>
-          ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Footer with Search and Workspace Info */}
-      
-
-      {/* Modal for Task Details */}
-      {selectedTask !== null && (
+      {showAddMeeting && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -412,94 +647,280 @@ export default function TimesheetsPage() {
           justifyContent: 'center',
           zIndex: 1000
         }}
-        onClick={() => setSelectedTask(null)}
+          onClick={() => setShowAddMeeting(false)}
         >
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '24px',
+            borderRadius: '12px',
+            padding: '30px',
             width: '90%',
             maxWidth: '500px',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
           }}
-          onClick={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
-            {(() => {
-              const task = tasks.find(t => t.id === selectedTask);
-              if (!task) return null;
-              
-              return (
-                <>
-                  <h2 style={{
-                    fontSize: '18px',
-                    fontWeight: '600',
-                    color: '#333',
-                    marginBottom: '20px'
-                  }}>
-                    {task.title} - Time Details
-                  </h2>
-                  
-                  <div style={{
-                    marginBottom: '20px'
-                  }}>
-                    {columns.slice(1, -1).map((column, index) => (
-                      <div 
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '10px 0',
-                          borderBottom: index < columns.length - 2 ? '1px solid #f0f0f0' : 'none'
-                        }}
-                      >
-                        <span style={{ fontSize: '14px', color: '#666' }}>
-                          {column}
-                        </span>
-                        <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                          {task.times[column] || '0:00'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '16px',
-                    backgroundColor: '#f0fdf4',
-                    borderRadius: '6px',
-                    border: '1px solid #bbf7d0',
-                    marginTop: '16px'
-                  }}>
-                    <span style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>
-                      Total:
-                    </span>
-                    <span style={{ fontSize: '18px', fontWeight: '700', color: '#059669' }}>
-                      {task.times['Total']}
-                    </span>
-                  </div>
-                  
-                  <button style={{
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '24px'
+            }}>
+              <h2 style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827'
+              }}>
+                Schedule New Meeting
+              </h2>
+              <button
+                onClick={() => setShowAddMeeting(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  color: '#6B7280',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '6px'
+                }}>
+                  Meeting Title
+                </label>
+                <input
+                  type="text"
+                  value={newMeeting.title}
+                  onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })}
+                  placeholder="Enter meeting title..."
+                  style={{
                     width: '100%',
-                    padding: '12px',
-                    backgroundColor: '#3b82f6',
-                    border: 'none',
+                    padding: '10px',
+                    border: '1px solid #D1D5DB',
                     borderRadius: '6px',
-                    fontSize: '14px',
-                    color: 'white',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    marginTop: '20px'
+                    fontSize: '14px'
                   }}
-                  onClick={() => setSelectedTask(null)}
-                  >
-                    Close Details
-                  </button>
-                </>
-              );
-            })()}
+                />
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '6px'
+                }}>
+                  Meeting Date
+                </label>
+                <input
+                  type="date"
+                  value={newMeeting.date}
+                  onChange={(e) => setNewMeeting({ ...newMeeting, date: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '6px',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '16px'
+              }}>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#374151',
+                    marginBottom: '6px'
+                  }}>
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    value={newMeeting.startTime}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, startTime: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '1px solid #D1D5DB',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#374151',
+                    marginBottom: '6px'
+                  }}>
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={newMeeting.endTime}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, endTime: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '1px solid #D1D5DB',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '6px'
+                }}>
+                  Meeting Type
+                </label>
+                <select
+                  value={newMeeting.type}
+                  onChange={(e) => setNewMeeting({ ...newMeeting, type: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '6px',
+                    fontSize: '14px'
+                  }}
+                >
+                  {meetingTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '6px'
+                }}>
+                  Participants (comma separated)
+                </label>
+                <input
+                  type="text"
+                  value={newMeeting.participants}
+                  onChange={(e) => setNewMeeting({ ...newMeeting, participants: e.target.value })}
+                  placeholder="John, Sarah, Mike"
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '6px',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '6px'
+                }}>
+                  Status
+                </label>
+                <select
+                  value={newMeeting.status}
+                  onChange={(e) => setNewMeeting({
+                    ...newMeeting,
+                    status: e.target.value as 'scheduled' | 'completed' | 'cancelled'
+                  })}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '6px',
+                    fontSize: '14px'
+                  }}
+                >
+                  <option value="scheduled">Scheduled</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              marginTop: '24px'
+            }}>
+              <button
+                onClick={handleAddMeeting}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#3B82F6',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  color: 'white',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Schedule Meeting
+              </button>
+              <button
+                onClick={() => setShowAddMeeting(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#6B7280',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  color: 'white',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

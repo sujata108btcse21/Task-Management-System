@@ -4,12 +4,10 @@ import { useState, useEffect } from 'react';
 import { getAllTasks, type Task } from '../../lib/tasks';
 
 export default function BoardsPage() {
-  const [viewMode, setViewMode] = useState('grid');
   const [selectedBoard, setSelectedBoard] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  // Load tasks from shared storage
   useEffect(() => {
     setTasks(getAllTasks());
   }, []);
@@ -66,7 +64,6 @@ export default function BoardsPage() {
     },
   ];
 
-  // Add tasks to each board based on department
   const boardsWithTasks = boards.map(board => {
     const boardTasks = tasks.filter(task => 
       board.categories.some(category => 
@@ -102,7 +99,6 @@ export default function BoardsPage() {
 
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Header with Search and View Toggle */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between',
@@ -162,7 +158,6 @@ export default function BoardsPage() {
         </div>
       </div>
 
-      {/* Boards Grid View */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
@@ -191,7 +186,6 @@ export default function BoardsPage() {
             e.currentTarget.style.borderColor = '#E5E7EB';
           }}
           >
-            {/* Color accent dot */}
             <div style={{
               position: 'absolute',
               top: '24px',
@@ -202,7 +196,6 @@ export default function BoardsPage() {
               borderRadius: '50%'
             }}></div>
 
-            {/* Board Title */}
             <h3 style={{
               fontSize: '20px',
               fontWeight: '700',
@@ -214,7 +207,6 @@ export default function BoardsPage() {
               {board.title}
             </h3>
 
-            {/* Categories */}
             <div style={{
               display: 'flex',
               flexWrap: 'wrap',
@@ -235,7 +227,6 @@ export default function BoardsPage() {
               ))}
             </div>
 
-            {/* Task Stats */}
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -265,7 +256,6 @@ export default function BoardsPage() {
               </div>
             </div>
 
-            {/* Recent Tasks Preview */}
             <div style={{
               marginTop: '16px',
               paddingTop: '16px',
@@ -329,7 +319,6 @@ export default function BoardsPage() {
         ))}
       </div>
 
-      {/* Board Details Modal */}
       {selectedBoard !== null && (
         <div style={{
           position: 'fixed',
@@ -420,7 +409,6 @@ export default function BoardsPage() {
                     ))}
                   </div>
 
-                  {/* Task Statistics */}
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(4, 1fr)',
@@ -456,7 +444,6 @@ export default function BoardsPage() {
                     </div>
                   </div>
 
-                  {/* Tasks List */}
                   <h3 style={{
                     fontSize: '18px',
                     fontWeight: '600',
@@ -531,7 +518,6 @@ export default function BoardsPage() {
         </div>
       )}
 
-      {/* Empty State */}
       {filteredBoards.length === 0 && (
         <div style={{
           textAlign: 'center',
